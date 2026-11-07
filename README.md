@@ -14,7 +14,8 @@ schema/src/engine/derive.ts       pure function: Character -> every computed num
 schema/src/engine/rest.ts         short/long rest + initiative recharge, driven only by resource tags
 schema/src/engine/hp.ts           damage (temp HP first, death saves at 0), healing (clamped), temp HP
 schema/src/engine/resources.ts    spend/regain resources and spell slots, `state` resources on/off
-schema/src/engine/conditions.ts   conditions, exhaustion, free-text effects, concentration
+schema/src/engine/conditions.ts   conditions, exhaustion, free-text effects, concentration, inspiration
+schema/src/engine/dice.ts         d20 tests (advantage, exhaustion penalty), damage rolls, per-die rerolls
 schema/src/validate.ts            parses the examples and prints the derived sheet
 schema/examples/                  Tidewick and Kenpachi as real documents
 schema/test/                      Vitest unit tests; the validate numbers are asserted here

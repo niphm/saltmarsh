@@ -1,8 +1,9 @@
 <script lang="ts">
   import type { Character, Derived } from "@saltmarsh/schema";
+  import type { Roller } from "../../lib/rolls.svelte";
   import { signed } from "../../lib/format";
 
-  let { c, d }: { c: Character; d: Derived } = $props();
+  let { c, d, roll }: { c: Character; d: Derived; roll: Roller } = $props();
 
   const otherSpeeds = $derived(
     (["fly", "swim", "climb"] as const).flatMap(k => (c.speed[k] ? [`${k} ${c.speed[k]}`] : [])),
@@ -18,11 +19,19 @@
       <dd class="mt-1 text-2xl font-semibold text-ink tabular-nums">{d.ac}</dd>
     </div>
 
-    <div class="flex flex-col rounded-xl border border-line bg-card p-3">
-      <dt class="text-xs font-semibold tracking-wider text-ink-muted uppercase">
-        <abbr title="Initiative" class="no-underline">Init</abbr>
-      </dt>
-      <dd class="mt-1 text-2xl font-semibold text-ink tabular-nums">{signed(d.initiative)}</dd>
+    <div class="flex">
+      <dt class="sr-only">Initiative</dt>
+      <dd class="flex flex-1">
+        <button
+          type="button"
+          onclick={() => roll.d20("Initiative", d.initiative)}
+          aria-label="Initiative {signed(d.initiative)}. Roll initiative."
+          class="flex flex-1 flex-col rounded-xl border border-line bg-card p-3 text-left hover:bg-well"
+        >
+          <span class="text-xs font-semibold tracking-wider text-ink-muted uppercase" aria-hidden="true">Init</span>
+          <span class="mt-1 text-2xl font-semibold text-ink tabular-nums" aria-hidden="true">{signed(d.initiative)}</span>
+        </button>
+      </dd>
     </div>
 
     <div class="flex flex-col rounded-xl border border-line bg-card p-3">

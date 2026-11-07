@@ -2,7 +2,7 @@
  * Display formatting only. No rules math lives here - every number comes
  * from derive(); these helpers just turn values and ids into text.
  */
-import type { Ability, Character, HpBand, Life, Resource, Skill } from "@saltmarsh/schema";
+import type { Ability, Character, HpBand, Life, Resource, Roll, RollMode, Skill } from "@saltmarsh/schema";
 
 export type ProfLevel = NonNullable<Character["proficiencies"]["skills"][Skill]>;
 
@@ -48,6 +48,35 @@ export const HP_BAND_LABEL: Record<HpBand, string> = { full: "Full", injured: "I
 export const HP_BAND_TEXT: Record<HpBand, string> = { full: "text-ok", injured: "text-warn", critical: "text-danger", down: "text-danger" };
 
 export const LIFE_LABEL: Record<Life, string> = { alive: "Alive", dying: "Dying", stable: "Stable", dead: "Dead" };
+
+/** "1d8+4", "1d10−1", "2d6"; a flat line (dice "0") shows as "+2". */
+export function damageFormula(dice: string, bonus: number): string {
+  const d = dice.trim();
+  if (d === "" || d === "0") return signed(bonus);
+  return bonus === 0 ? d : `${d}${signed(bonus)}`;
+}
+
+/** Breakdown of a roll after the dice: "+ 7", "+ 7 − 4 exhaustion", "+ 4". */
+export function rollExtras(roll: Roll): string {
+  const parts: string[] = [];
+  const add = roll.kind === "d20" ? roll.modifier : roll.bonus;
+  if (add !== 0 || roll.dice.length === 0) parts.push(add < 0 ? `− ${Math.abs(add)}` : `+ ${add}`);
+  if (roll.kind === "d20" && roll.penalty) parts.push(`− ${roll.penalty} exhaustion`);
+  return parts.join(" ");
+}
+
+/** "9:41 PM" in the device's locale. */
+export const clockTime = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+
+export const ROLL_MODE_LABEL: Record<RollMode, string> = { normal: "Normal", advantage: "Advantage", disadvantage: "Disadvantage" };
+
+/** One-line summary for screen readers and the dice bar. */
+export function rollSummary(roll: Roll): string {
+  const nat = roll.kind === "d20" ? (roll.natural === 20 ? ", natural 20" : roll.natural === 1 ? ", natural 1" : "") : "";
+  const mode = roll.kind === "d20" && roll.mode !== "normal" ? ` with ${roll.mode}` : "";
+  const type = roll.kind === "damage" && roll.type ? ` ${roll.type}` : "";
+  return `${roll.label}${mode}: ${roll.total}${type}${nat}`;
+}
 
 /** "Sorcerer 5 (Divine Soul)" - joined with " / " for multiclass. */
 export const classLine = (classes: Character["classes"]) =>

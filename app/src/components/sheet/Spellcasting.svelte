@@ -1,11 +1,12 @@
 <script lang="ts">
   import { restoreSlot, spendSlot, type Derived } from "@saltmarsh/schema";
   import type { Change } from "../../lib/store.svelte";
+  import type { Roller } from "../../lib/rolls.svelte";
   import { ABILITY_NAME, ordinal, signed } from "../../lib/format";
   import Card from "../Card.svelte";
   import PipButtons from "../PipButtons.svelte";
 
-  let { spell, act }: { spell: NonNullable<Derived["spell"]>; act: (change: Change) => void } = $props();
+  let { spell, act, roll }: { spell: NonNullable<Derived["spell"]>; act: (change: Change) => void; roll: Roller } = $props();
 </script>
 
 <Card title="Spellcasting">
@@ -14,9 +15,19 @@
       <dt class="text-xs text-ink-muted">Save DC</dt>
       <dd class="text-2xl font-semibold text-ink tabular-nums">{spell.dc}</dd>
     </div>
-    <div class="rounded-lg bg-well p-2">
-      <dt class="text-xs text-ink-muted">Spell attack</dt>
-      <dd class="text-2xl font-semibold text-ink tabular-nums">{signed(spell.attack)}</dd>
+    <div class="flex">
+      <dt class="sr-only">Spell attack</dt>
+      <dd class="flex flex-1">
+        <button
+          type="button"
+          onclick={() => roll.d20("Spell attack", spell.attack)}
+          aria-label="Spell attack {signed(spell.attack)}. Roll a spell attack."
+          class="flex flex-1 flex-col items-center rounded-lg border-2 border-accent bg-well p-2 hover:bg-card"
+        >
+          <span class="text-xs text-ink-muted" aria-hidden="true">Spell attack</span>
+          <span class="text-2xl font-semibold text-ink tabular-nums" aria-hidden="true">{signed(spell.attack)}</span>
+        </button>
+      </dd>
     </div>
     <div class="rounded-lg bg-well p-2">
       <dt class="text-xs text-ink-muted">{ABILITY_NAME[spell.ability]}</dt>

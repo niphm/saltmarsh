@@ -17,7 +17,12 @@
   const lastChange = $derived(c.state.log.at(-1)?.change);
   const hpWord = $derived(d.life === "alive" ? HP_BAND_LABEL[d.hpBand] : LIFE_LABEL[d.life]);
   const hasChips = $derived(
-    !!c.state.concentration || activeNames.length > 0 || conditions.length > 0 || d.exhaustion.level > 0 || d.defenses.resistances.length > 0,
+    !!c.state.concentration ||
+      c.state.inspiration ||
+      activeNames.length > 0 ||
+      conditions.length > 0 ||
+      d.exhaustion.level > 0 ||
+      d.defenses.resistances.length > 0,
   );
 
   function goToHp() {
@@ -81,6 +86,14 @@
             aria-label="End concentration on {refName(c.state.concentration.spell)}"
             onclick={() => act(endConcentration)}>×</button
           >
+        </li>
+      {/if}
+      {#if c.state.inspiration}
+        <li class="inline-flex items-center gap-1 rounded-full border-2 border-accent px-3 py-0.5 font-semibold text-accent">
+          <svg viewBox="0 0 16 16" class="size-3.5" fill="currentColor" aria-hidden="true">
+            <path d="M8 1.5 9.8 6l4.7.3-3.6 3 1.2 4.6L8 11.4 3.9 13.9 5.1 9.3l-3.6-3L6.2 6 8 1.5Z" />
+          </svg>
+          Inspiration
         </li>
       {/if}
       {#each activeNames as name (name)}

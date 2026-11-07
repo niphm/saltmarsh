@@ -4,6 +4,7 @@
   import { router } from "./lib/route.svelte";
   import TopBar from "./components/TopBar.svelte";
   import StatusBar from "./components/StatusBar.svelte";
+  import DiceBar from "./components/DiceBar.svelte";
   import CharacterSheet from "./components/CharacterSheet.svelte";
   import LoadError from "./components/LoadError.svelte";
   import Settings from "./components/Settings.svelte";
@@ -39,7 +40,7 @@
   />
 {/if}
 
-<main id="main" tabindex="-1" class="mx-auto max-w-5xl px-4 pt-4 pb-[calc(4rem+env(safe-area-inset-bottom))] outline-none">
+<main id="main" tabindex="-1" class="mx-auto max-w-5xl px-4 pt-4 pb-[calc(6rem+env(safe-area-inset-bottom))] outline-none">
   {#if characters.storageError}
     <p role="alert" class="mb-3 rounded-lg border-2 border-danger bg-card p-3 text-sm text-ink">
       <span class="font-semibold text-danger">Not saving:</span>
@@ -61,6 +62,10 @@
     <p class="text-ink-muted">No characters yet.</p>
   {/if}
 </main>
+
+{#if router.route.name === "sheet" && current?.ok}
+  <DiceBar c={current.character} {act} />
+{/if}
 
 <!-- Announces each change and undo to screen readers. -->
 <div class="sr-only" aria-live="polite" aria-atomic="true">

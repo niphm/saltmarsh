@@ -1,5 +1,44 @@
 import { describe, expect, it } from "vitest";
-import { capitalize, classLine, groupBy, ordinal, refName, signed, skillName, titleCase } from "../src/lib/format";
+import type { DamageRoll, D20Roll } from "@saltmarsh/schema";
+import {
+  capitalize,
+  classLine,
+  damageFormula,
+  groupBy,
+  ordinal,
+  refName,
+  rollExtras,
+  rollSummary,
+  signed,
+  skillName,
+  titleCase,
+} from "../src/lib/format";
+
+describe("roll formatting", () => {
+  it("damageFormula", () => {
+    expect(damageFormula("1d8", 4)).toBe("1d8+4");
+    expect(damageFormula("1d10", -1)).toBe("1d10−1");
+    expect(damageFormula("2d6", 0)).toBe("2d6");
+    expect(damageFormula("0", 2)).toBe("+2");
+  });
+
+  const d20: D20Roll = {
+    kind: "d20", label: "Athletics", mode: "advantage", dice: [{ sides: 20, value: 3 }, { sides: 20, value: 20 }],
+    kept: 1, natural: 20, modifier: 7, penalty: 2, total: 25,
+  };
+  const dmg: DamageRoll = { kind: "damage", label: "Pistol damage", dice: [{ sides: 10, value: 6 }], bonus: -1, type: "piercing", total: 5 };
+
+  it("rollExtras shows modifier and exhaustion", () => {
+    expect(rollExtras(d20)).toBe("+ 7 − 2 exhaustion");
+    expect(rollExtras(dmg)).toBe("− 1");
+    expect(rollExtras({ ...dmg, dice: [], bonus: 2, total: 2 })).toBe("+ 2");
+  });
+
+  it("rollSummary reads naturally", () => {
+    expect(rollSummary(d20)).toBe("Athletics with advantage: 25, natural 20");
+    expect(rollSummary(dmg)).toBe("Pistol damage: 5 piercing");
+  });
+});
 
 describe("format", () => {
   it("signed uses a true minus sign", () => {

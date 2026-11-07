@@ -36,6 +36,10 @@ export default defineConfig({
       workbox: {
         globPatterns: ["**/*.{js,css,html,svg,png,ico,webmanifest}"],
         cleanupOutdatedCaches: true,
+        // autoUpdate expects the new worker to take over by itself; the plugin only sets these
+        // when injectRegister is "auto", so set them explicitly. Checked by scripts/check-sw.mjs.
+        skipWaiting: true,
+        clientsClaim: true,
       },
     }),
   ],
