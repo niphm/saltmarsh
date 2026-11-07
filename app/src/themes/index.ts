@@ -17,15 +17,17 @@ export interface ThemeMeta {
   description: string;
   scheme: "dark" | "light";
   ready: boolean;
+  /** Held to WCAG AAA (7:1) for text instead of AA. */
+  aaa?: boolean;
 }
 
 export const THEMES: readonly ThemeMeta[] = [
   { id: "saltmarsh", label: "Saltmarsh", description: "Deep navy and brass", scheme: "dark", ready: true },
   { id: "parchment", label: "Parchment", description: "Warm paper and ink", scheme: "light", ready: true },
-  { id: "ember", label: "Ember", description: "Charcoal and orange", scheme: "dark", ready: false },
-  { id: "verdant", label: "Verdant", description: "Forest green and gold", scheme: "dark", ready: false },
-  { id: "arcane", label: "Arcane", description: "Violet and silver", scheme: "dark", ready: false },
-  { id: "high-contrast", label: "High Contrast", description: "Black and white, WCAG AAA", scheme: "dark", ready: false },
+  { id: "ember", label: "Ember", description: "Charcoal and orange", scheme: "dark", ready: true },
+  { id: "verdant", label: "Verdant", description: "Forest green and gold", scheme: "dark", ready: true },
+  { id: "arcane", label: "Arcane", description: "Violet and silver", scheme: "dark", ready: true },
+  { id: "high-contrast", label: "High Contrast", description: "Black and white, WCAG AAA", scheme: "dark", ready: true, aaa: true },
 ];
 
 export const DEFAULT_THEME = "saltmarsh";

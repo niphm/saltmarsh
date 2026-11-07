@@ -1,0 +1,18 @@
+/* High Contrast - black and white, WCAG AAA text, thick focus rings. */
+[data-theme="high-contrast"] {
+  color-scheme: dark;
+  --page: #000000;
+  --card: #000000;
+  --well: #1a1a1a;
+  --line: #ffffff;
+  --ink: #ffffff;
+  --ink-muted: #e6e6e6;
+  --accent: #ffff00;
+  --on-accent: #000000;
+  --focus: #00ffff;
+  --danger: #ff9999;
+  --warn: #ffb347;
+  --ok: #66ff66;
+  --info: #66ccff;
+  --focus-width: 4px;
+}

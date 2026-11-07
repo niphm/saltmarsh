@@ -1,0 +1,17 @@
+/* Verdant - dark forest green and gold. */
+[data-theme="verdant"] {
+  color-scheme: dark;
+  --page: #0d1a14;
+  --card: #12241b;
+  --well: #1a3125;
+  --line: #2a4a39;
+  --ink: #ecf4ee;
+  --ink-muted: #b2c7b8;
+  --accent: #e6c35c;
+  --on-accent: #1a1404;
+  --focus: #f2d77f;
+  --danger: #ff8fa3;
+  --warn: #ffb26b;
+  --ok: #a6e3b8;
+  --info: #9ccbff;
+}

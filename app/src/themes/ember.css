@@ -1,0 +1,17 @@
+/* Ember - dark charcoal and orange. */
+[data-theme="ember"] {
+  color-scheme: dark;
+  --page: #141110;
+  --card: #1d1917;
+  --well: #29231f;
+  --line: #3d342e;
+  --ink: #f5ede6;
+  --ink-muted: #c4b5a8;
+  --accent: #ff9a4d;
+  --on-accent: #1a0d03;
+  --focus: #ffc08f;
+  --danger: #ff8f87;
+  --warn: #ffd166;
+  --ok: #8fd9a8;
+  --info: #8ec8ff;
+}

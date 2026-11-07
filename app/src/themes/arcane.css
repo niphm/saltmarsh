@@ -1,0 +1,17 @@
+/* Arcane - dark violet and silver. */
+[data-theme="arcane"] {
+  color-scheme: dark;
+  --page: #140f1f;
+  --card: #1d162c;
+  --well: #281f3b;
+  --line: #3d3157;
+  --ink: #f1eef7;
+  --ink-muted: #bfb6d3;
+  --accent: #d4cdea;
+  --on-accent: #181326;
+  --focus: #b794ff;
+  --danger: #ff9b8f;
+  --warn: #ffd27a;
+  --ok: #8fe0ad;
+  --info: #9cc4ff;
+}
