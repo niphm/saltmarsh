@@ -1,0 +1,8 @@
+{
+  "id": "saltmarsh",
+  "name": "Saltmarsh table pack",
+  "version": "0.1",
+  "license": "Table use",
+  "attribution": "Entries the party uses that aren't in the SRD. The summaries were written for this app; see the Player's Handbook (2024) for the full rules text.",
+  "homebrew": true
+}

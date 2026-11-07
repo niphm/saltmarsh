@@ -15,7 +15,8 @@
     "lint": "eslint .",
     "typecheck": "npm run typecheck --workspaces",
     "test": "npm run test --workspaces",
-    "validate": "npm run validate -w @saltmarsh/schema"
+    "validate": "npm run validate -w @saltmarsh/schema",
+    "packs:srd": "node packs/scripts/build-srd-spells.mjs"
   },
   "engines": {
     "node": ">=22"

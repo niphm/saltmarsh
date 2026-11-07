@@ -57,7 +57,7 @@
     "spells": [
       { "ref": "srd:spell:prestidigitation", "source": "Sorcerer" },
       { "ref": "srd:spell:chill-touch", "source": "Sorcerer" },
-      { "ref": "srd:spell:blade-ward", "source": "Sorcerer" },
+      { "ref": "saltmarsh:spell:blade-ward", "source": "Sorcerer" },
       { "ref": "srd:spell:light", "source": "Sorcerer" },
       { "ref": "srd:spell:message", "source": "Sorcerer" },
       { "ref": "srd:spell:sorcerous-burst", "source": "Sorcerer" },
@@ -66,7 +66,7 @@
       { "ref": "srd:spell:cure-wounds", "source": "Divine Soul" },
       { "ref": "srd:spell:fog-cloud", "source": "Sorcerer" },
       { "ref": "srd:spell:thunderwave", "source": "Sorcerer" },
-      { "ref": "srd:spell:witch-bolt", "source": "Sorcerer" },
+      { "ref": "saltmarsh:spell:witch-bolt", "source": "Sorcerer" },
       { "ref": "srd:spell:command", "source": "Sorcerer", "freeCastResource": "free-command" },
       { "ref": "srd:spell:misty-step", "source": "Sorcerer", "freeCastResource": "free-misty-step" },
       { "ref": "srd:spell:gust-of-wind", "source": "Sorcerer" },

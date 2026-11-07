@@ -2,10 +2,12 @@
 export * from "./schema/expression";
 export * from "./schema/character";
 export * from "./schema/party";
+export * from "./schema/pack";
 export * from "./engine/derive";
 export * from "./engine/rest";
 export * from "./engine/hp";
 export * from "./engine/resources";
 export * from "./engine/conditions";
 export * from "./engine/dice";
+export * from "./engine/spells";
 export { LOG_LIMIT } from "./engine/log";
