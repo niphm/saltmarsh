@@ -4,10 +4,9 @@
  * no character-specific code anywhere.
  */
 import type { Character } from "../schema/character";
+import { evalExpr } from "../schema/expression";
 import { derive } from "./derive";
-
-const stamp = (c: Character, change: string): Character["state"]["log"] =>
-  [...c.state.log.slice(-49), { at: new Date().toISOString(), change }];
+import { stamp } from "./log";
 
 export interface ShortRestOptions {
   hitDiceToSpend?: number;
@@ -22,7 +21,7 @@ export function shortRest(c: Character, opts: ShortRestOptions = {}): Character 
   for (const r of c.resources) {
     if (r.recharge !== "short") continue;
     if (r.rechargeAmount !== undefined) {
-      const amt = Math.floor(evalAmount(r.rechargeAmount, d));
+      const amt = Math.floor(evalExpr(r.rechargeAmount, d.ctx));
       spent[r.id] = Math.max(0, (spent[r.id] ?? 0) - amt);
     } else {
       delete spent[r.id];
@@ -60,9 +59,10 @@ export function longRest(c: Character): Character {
       hitDiceSpent,
       deathSaves: { success: 0, failure: 0 },
       concentration: null,
+      // Conditions clear; exhaustion drops one level (REQUIREMENTS 7).
       conditions: c.state.conditions
-        .map(x => x.condition === "exhaustion" && (x.level ?? 1) > 1 ? { ...x, level: (x.level ?? 1) - 1 } : x)
-        .filter(x => !(x.condition === "exhaustion" && (x.level ?? 1) <= 1)),
+        .filter(x => x.condition === "exhaustion" && (x.level ?? 1) > 1)
+        .map(x => ({ ...x, level: (x.level ?? 1) - 1 })),
       log: stamp(c, "long rest"),
     },
     updatedAt: new Date().toISOString(),
@@ -74,8 +74,4 @@ export function onInitiative(c: Character): Character {
   const spent = { ...c.state.spent };
   for (const r of c.resources) if (r.recharge === "initiative") delete spent[r.id];
   return { ...c, state: { ...c.state, spent, log: stamp(c, "initiative rolled") } };
-}
-
-function evalAmount(expr: number | string, d: ReturnType<typeof derive>): number {
-  return typeof expr === "number" ? expr : require("../schema/expression").evalExpr(expr, d.ctx);
 }

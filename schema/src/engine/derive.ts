@@ -43,8 +43,14 @@ export interface Derived {
   spell?: { ability: Ability; mod: number; dc: number; attack: number; slots: number[]; slotsRemaining: number[] };
   resources: DerivedResource[];
   hitDice: { size: number; total: number; remaining: number }[];
+  /** Document defenses plus resistances granted by active `state` resources. */
+  defenses: { resistances: string[]; immunities: string[]; conditionImmunities: string[] };
+  /** Effects folded in from active `state` resources (Raging, Large Form, ...). */
+  active: { ids: string[]; damageBonus: number; advantageOn: string[]; blocks: string[] };
   ctx: ExprContext;
 }
+
+const uniq = (xs: string[]) => [...new Set(xs)];
 
 export function derive(c: Character): Derived {
   const level = c.classes.reduce((n, k) => n + k.level, 0);
@@ -113,10 +119,23 @@ export function derive(c: Character): Derived {
   const hitDice = c.classes.map(k => ({ size: k.hitDie, total: k.level, remaining: k.level })); // TODO per-class spent
   if (hitDice[0]) hitDice[0].remaining = Math.max(0, hitDice[0].total - c.state.hitDiceSpent);
 
+  // whileActive effects from `state` resources that are on
+  const defenses = {
+    resistances: uniq([...c.damageResistances, ...activeRes.flatMap(r => r.whileActive?.resistances ?? [])]),
+    immunities: uniq(c.damageImmunities),
+    conditionImmunities: uniq(c.conditionImmunities),
+  };
+  const active = {
+    ids: activeRes.map(r => r.id),
+    damageBonus: activeRes.reduce((n, r) => n + (r.whileActive?.damageBonus !== undefined ? evalExpr(r.whileActive.damageBonus, ctx) : 0), 0),
+    advantageOn: uniq(activeRes.flatMap(r => r.whileActive?.advantageOn ?? [])),
+    blocks: uniq(activeRes.flatMap(r => r.whileActive?.blocks ?? [])),
+  };
+
   return {
     level, prof, mods, saves, skills,
     passive: { perception: 10 + skills.perception, insight: 10 + skills.insight, investigation: 10 + skills.investigation },
     initiative: mods.dex,
-    hpMax, ac, speed, spell, resources, hitDice, ctx,
+    hpMax, ac, speed, spell, resources, hitDice, defenses, active, ctx,
   };
 }

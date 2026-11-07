@@ -20,6 +20,7 @@ export const SCHEMA_VERSION = 1;
 
 const Id = z.string().min(1);
 const Ability = z.enum(ABILITIES);
+const Score = z.number().int().min(1).max(30);
 
 // ---------------------------------------------------------------------------
 // Rules-pack references
@@ -252,7 +253,8 @@ export const Character = z.object({
   }),
 
   classes: z.array(ClassLevel).min(1),
-  abilityScores: z.record(Ability, z.number().int().min(1).max(30)),
+  /** All six required: a z.record with enum keys accepts missing keys, which derived NaN everywhere. */
+  abilityScores: z.object({ str: Score, dex: Score, con: Score, int: Score, wis: Score, cha: Score }),
 
   /** Base walking speed and extra movement modes from species/features. */
   speed: z.object({ walk: z.number().int(), fly: z.number().int().optional(), swim: z.number().int().optional(), climb: z.number().int().optional() }),
