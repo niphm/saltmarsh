@@ -17,6 +17,7 @@ schema/src/engine/resources.ts    spend/regain resources and spell slots, `state
 schema/src/engine/conditions.ts   conditions, exhaustion, free-text effects, concentration, inspiration
 schema/src/engine/dice.ts         d20 tests (advantage, exhaustion penalty), damage rolls, per-die rerolls
 schema/src/engine/spells.ts       casting (slots, free casts, concentration), spell dice by slot/character level
+schema/src/engine/inventory.ts    coins, equip (armor/shield swap), attunement (max 3), quantity, charges, add/remove
 schema/src/schema/pack.ts         rules pack shapes: Spell, PackMeta
 packs/srd/                        SRD 5.2 (CC-BY 4.0): pack.json + spells.json (339 spells, `npm run packs:srd`)
 packs/saltmarsh/                  table pack: non-SRD entries the party uses (summaries, not book text)

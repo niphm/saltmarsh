@@ -8,6 +8,9 @@ import type { SettingRow } from "./db";
 
 export const SEED_PREFIX = "seed:";
 
+/** Seed value meaning "this device's copy owns the document" (imported): never refresh it from the example. */
+export const SEED_LOCAL = "local";
+
 export const nowIso = () => new Date().toISOString();
 
 /** Hash of an example's document without its table state - detects repo edits to the example. */
@@ -31,6 +34,7 @@ export interface SeedPlan {
  * - Saved and the example's document is unchanged: use the saved copy.
  * - Saved but the example's document changed in the repo: new document, saved table state (doc vs state, F2.2).
  * - Saved copy no longer validates: reseed from the example.
+ * - Saved copy was imported over the example (seed = SEED_LOCAL): always use the saved copy.
  * - Saved characters that aren't examples are kept, after the examples.
  */
 export function planSeed(bundled: readonly unknown[], stored: readonly Character[], seeds: readonly SettingRow[]): SeedPlan {
@@ -48,6 +52,12 @@ export function planSeed(bundled: readonly unknown[], stored: readonly Character
     const hash = docHash(raw);
     const saved = storedById.get(fresh.id);
     storedById.delete(fresh.id);
+
+    if (saved && seedById.get(seedKey) === SEED_LOCAL) {
+      // Imported over the example: keep it as is, even if it no longer validates (show the error, don't overwrite).
+      plan.entries.push(loadCharacter(saved, fresh.id));
+      return;
+    }
 
     if (saved && seedById.get(seedKey) === hash) {
       const parsed = loadCharacter(saved, fresh.id);

@@ -4,13 +4,14 @@
  *
  * Every change is an engine function (Character -> Character). The store
  * never edits a character itself: it swaps in what the engine returns, saves
- * it, and keeps the previous `state` so undo can put it back.
+ * it, and keeps what changed (state, and inventory if touched) so undo can
+ * put it back.
  */
-import type { Character, CharacterState } from "@saltmarsh/schema";
+import type { Character } from "@saltmarsh/schema";
 import { examples } from "@saltmarsh/schema/examples";
-import { db } from "./db";
+import { db, toUndoStep, type UndoStep } from "./db";
 import { loadCharacter, type LoadResult } from "./characters";
-import { SEED_PREFIX, nowIso, planSeed } from "./seed";
+import { SEED_LOCAL, SEED_PREFIX, nowIso, planSeed } from "./seed";
 
 export { docHash } from "./seed";
 
@@ -20,7 +21,7 @@ export type Change = (c: Character) => Character;
 
 export class CharacterStore {
   entries = $state.raw<LoadResult[]>([]);
-  undoStacks = $state.raw<Record<string, CharacterState[]>>({});
+  undoStacks = $state.raw<Record<string, UndoStep[]>>({});
   ready = $state(false);
   /** Set when changes can't be saved on this device (storage blocked or a write failed). */
   storageError = $state<string | null>(null);
@@ -51,7 +52,7 @@ export class CharacterStore {
     }
 
     this.entries = plan.entries;
-    this.undoStacks = Object.fromEntries(history.map(h => [h.id, h.stack]));
+    this.undoStacks = Object.fromEntries(history.map(h => [h.id, h.stack.map(toUndoStep)]));
     this.ready = true;
 
     const { writes, seedWrites } = plan;
@@ -69,11 +70,16 @@ export class CharacterStore {
     return this.entries.find(e => e.id === id);
   }
 
+  /** Every character that loaded cleanly. */
+  get characters(): Character[] {
+    return this.entries.flatMap(e => (e.ok ? [e.character] : []));
+  }
+
   canUndo(id: string): boolean {
     return (this.undoStacks[id]?.length ?? 0) > 0;
   }
 
-  /** Apply an engine function to a character, save it, and remember the previous state for undo. */
+  /** Apply an engine function to a character, save it, and remember what it replaced for undo. */
   async apply(id: string, change: Change): Promise<void> {
     const entry = this.find(id);
     if (!entry?.ok) return;
@@ -81,25 +87,65 @@ export class CharacterStore {
     const next = change(prev);
     if (next === prev) return; // engine no-op: nothing to save or undo
 
-    const stack = [...(this.undoStacks[id] ?? []), prev.state].slice(-UNDO_LIMIT);
+    const step: UndoStep = { state: prev.state, ...(next.inventory !== prev.inventory ? { inventory: prev.inventory } : {}) };
+    const stack = [...(this.undoStacks[id] ?? []), step].slice(-UNDO_LIMIT);
     this.#replace(id, next);
     this.undoStacks = { ...this.undoStacks, [id]: stack };
     this.#announce(next.state.log.at(-1)?.change ?? "Updated");
     await this.#save(next, stack);
   }
 
-  /** Put back the state from before the last change (which also pops that change off state.log). */
+  /** Put back what the last change replaced (which also pops that change off state.log). */
   async undo(id: string): Promise<void> {
     const entry = this.find(id);
     const stack = this.undoStacks[id];
     if (!entry?.ok || !stack?.length) return;
+    const step = stack[stack.length - 1];
     const undone = entry.character.state.log.at(-1)?.change;
-    const next: Character = { ...entry.character, state: stack[stack.length - 1], updatedAt: nowIso() };
+    const next: Character = {
+      ...entry.character,
+      state: step.state,
+      ...(step.inventory ? { inventory: step.inventory } : {}),
+      updatedAt: nowIso(),
+    };
     const rest = stack.slice(0, -1);
     this.#replace(id, next);
     this.undoStacks = { ...this.undoStacks, [id]: rest };
     this.#announce(undone ? `Undid: ${undone}` : "Undid last change");
     await this.#save(next, rest);
+  }
+
+  /**
+   * Add or replace characters from an import (F1.1, F1.13). Replaced
+   * characters lose their undo history. One imported over a bundled example
+   * is marked locally owned, so a later change to the example won't overwrite it.
+   */
+  async importCharacters(incoming: Character[]): Promise<void> {
+    if (!incoming.length) return;
+    // Plain copies: a caller's reactive $state proxy would make IndexedDB's structured clone throw.
+    const chars = incoming.map(c => $state.snapshot(c) as Character);
+    const bundledIds = this.#bundled.map(raw => (raw as { id?: unknown } | null)?.id).filter(id => typeof id === "string");
+    const entries = [...this.entries];
+    for (const c of chars) {
+      const entry: LoadResult = { ok: true, id: c.id, name: c.identity.name, character: c };
+      const i = entries.findIndex(e => e.id === c.id);
+      if (i >= 0) entries[i] = entry;
+      else entries.push(entry);
+    }
+    const ids = chars.map(c => c.id);
+    const undo = { ...this.undoStacks };
+    for (const id of ids) delete undo[id];
+    this.entries = entries;
+    this.undoStacks = undo;
+    this.#announce(`Imported ${chars.map(c => c.identity.name).join(", ")}`);
+
+    await this.#persist(() =>
+      db.transaction("rw", db.characters, db.history, db.settings, async () => {
+        await db.characters.bulkPut(chars);
+        await db.history.bulkDelete(ids);
+        await db.settings.bulkPut(ids.filter(id => bundledIds.includes(id)).map(id => ({ key: SEED_PREFIX + id, value: SEED_LOCAL })));
+      }),
+    );
   }
 
   /** Forget all local changes and reload the bundled examples. */
@@ -124,7 +170,7 @@ export class CharacterStore {
     this.announcement = { text, seq: this.announcement.seq + 1 };
   }
 
-  #save(character: Character, stack: CharacterState[]) {
+  #save(character: Character, stack: UndoStep[]) {
     return this.#persist(() =>
       db.transaction("rw", db.characters, db.history, async () => {
         await db.characters.put(character);

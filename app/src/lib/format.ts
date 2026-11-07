@@ -2,7 +2,7 @@
  * Display formatting only. No rules math lives here - every number comes
  * from derive(); these helpers just turn values and ids into text.
  */
-import type { Ability, Character, HpBand, Life, Resource, Roll, RollMode, Skill, Spell } from "@saltmarsh/schema";
+import type { Ability, Character, HpBand, Item, Life, Resource, Roll, RollMode, Skill, Spell } from "@saltmarsh/schema";
 
 export type ProfLevel = NonNullable<Character["proficiencies"]["skills"][Skill]>;
 
@@ -76,6 +76,20 @@ export function rollSummary(roll: Roll): string {
   const mode = roll.kind === "d20" && roll.mode !== "normal" ? ` with ${roll.mode}` : "";
   const type = roll.kind === "damage" && roll.type ? ` ${roll.type}` : "";
   return `${roll.label}${mode}: ${roll.total}${type}${nat}`;
+}
+
+const gpFormat = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
+/** 32.85 -> "32.85", 7.5 -> "7.5", 1200 -> "1,200" */
+export const formatGp = (gp: number) => gpFormat.format(gp);
+
+/** Describes an item's AC data: "AC 14 + Dex (max 2)", "AC +2". Display only - derive() applies it. */
+export function acNote(e: Item["equipEffect"]): string | undefined {
+  if (!e) return undefined;
+  if (e.acBase !== undefined) {
+    const dex = e.acDexCap === null || e.acDexCap === undefined ? " + Dex" : e.acDexCap > 0 ? ` + Dex (max ${e.acDexCap})` : "";
+    return `AC ${e.acBase}${dex}${e.acBonus ? ` ${signed(e.acBonus)}` : ""}`;
+  }
+  return e.acBonus ? `AC ${signed(e.acBonus)}` : undefined;
 }
 
 /** "Cantrip", "1st level", "3rd level". */

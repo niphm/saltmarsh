@@ -10,11 +10,20 @@ export interface SettingRow {
   value: unknown;
 }
 
-/** Undo stack for one character: previous `state` snapshots, oldest first. */
+/** What undo puts back: the previous state, plus the previous inventory when the change touched it. */
+export interface UndoStep {
+  state: CharacterState;
+  inventory?: Character["inventory"];
+}
+
+/** Undo stack for one character, oldest first. Rows saved before inventory undo hold bare states. */
 export interface HistoryRow {
   id: string;
-  stack: CharacterState[];
+  stack: (UndoStep | CharacterState)[];
 }
+
+/** Normalize a stored stack entry (old rows stored the state itself). */
+export const toUndoStep = (x: UndoStep | CharacterState): UndoStep => ("hp" in x ? { state: x } : x);
 
 export const db = new Dexie("saltmarsh") as Dexie & {
   /** One record per character id (README rule 4: no level in storage keys). */

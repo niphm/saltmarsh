@@ -13,6 +13,7 @@
   import Spellcasting from "./sheet/Spellcasting.svelte";
   import Spells from "./sheet/Spells.svelte";
   import Conditions from "./sheet/Conditions.svelte";
+  import Inventory from "./sheet/Inventory.svelte";
   import SavingThrows from "./sheet/SavingThrows.svelte";
   import Senses from "./sheet/Senses.svelte";
   import Skills from "./sheet/Skills.svelte";
@@ -50,6 +51,7 @@
     <div class="md:col-span-2"><Spells c={character} {d} {act} {roll} /></div>
   {/if}
   <Conditions c={character} {d} {act} />
+  <Inventory c={character} {d} {act} />
   <SavingThrows c={character} {d} {roll} />
   <Senses c={character} {d} />
   <Proficiencies c={character} />

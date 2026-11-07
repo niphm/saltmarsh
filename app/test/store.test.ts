@@ -4,7 +4,7 @@
  */
 import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it } from "vitest";
-import { applyDamage, derive, setTempHp, spendResource, type Character } from "@saltmarsh/schema";
+import { addItem, applyDamage, changeCoins, derive, setEquipped, setTempHp, spendResource, type Character } from "@saltmarsh/schema";
 import { examples } from "@saltmarsh/schema/examples";
 import { db } from "../src/lib/db";
 import { CharacterStore, UNDO_LIMIT, docHash } from "../src/lib/store.svelte";
@@ -81,6 +81,40 @@ describe("persistence (N1.3)", () => {
   });
 });
 
+describe("import (F1.1, F1.13)", () => {
+  it("replaces an existing character, clears its undo history, and survives reload", async () => {
+    const s = await reload();
+    await s.apply("c_kenpachi", c => applyDamage(c, 5));
+    const imported = addItem(char(s, "c_kenpachi"), { name: "Sea Charm", category: "magic-item" });
+    await s.importCharacters([imported]);
+
+    expect(char(s, "c_kenpachi").inventory.items.at(-1)?.name).toBe("Sea Charm");
+    expect(s.canUndo("c_kenpachi")).toBe(false);
+    expect(s.announcement.text).toBe("Imported Kenpachi");
+    expect(char(await reload(), "c_kenpachi").inventory.items.at(-1)?.name).toBe("Sea Charm");
+  });
+
+  it("adds a new character after the bundled ones", async () => {
+    const s = await reload();
+    const azrael = { ...char(s, "c_tidewick"), id: "c_azrael", identity: { ...char(s, "c_tidewick").identity, name: "Azrael" } };
+    await s.importCharacters([azrael]);
+    expect(s.entries.map(e => e.id)).toEqual(["c_tidewick", "c_kenpachi", "c_azrael"]);
+    expect((await reload()).entries.map(e => e.id)).toEqual(["c_tidewick", "c_kenpachi", "c_azrael"]);
+  });
+
+  it("a character imported over an example isn't overwritten when the example changes", async () => {
+    const s = await reload();
+    const edited = { ...char(s, "c_tidewick"), hpMax: 99 };
+    await s.importCharacters([edited]);
+
+    const changedExamples = examples.map(raw => {
+      const r = raw as { id: string; hpMax: number };
+      return r.id === "c_tidewick" ? { ...r, hpMax: 40 } : r;
+    });
+    expect(derive(char(await reload(changedExamples), "c_tidewick")).hpMax).toBe(99);
+  });
+});
+
 describe("undo (F1.12)", () => {
   it("restores the previous state and pops the log entry", async () => {
     const s = await reload();
@@ -123,6 +157,29 @@ describe("undo (F1.12)", () => {
       await s.apply("c_kenpachi", c => setTempHp(c, i + 1));
     }
     expect(s.undoStacks["c_kenpachi"]).toHaveLength(UNDO_LIMIT);
+  });
+
+  it("undo puts back inventory changes too (inventory lives outside state)", async () => {
+    const s = await reload();
+    await s.apply("c_kenpachi", c => setEquipped(c, "i-shield", false));
+    await s.apply("c_kenpachi", c => changeCoins(c, { gp: 25 }));
+    expect(derive(char(s, "c_kenpachi")).ac).toBe(9);
+
+    await s.undo("c_kenpachi");
+    expect(char(s, "c_kenpachi").inventory.coins.gp).toBe(0);
+    await s.undo("c_kenpachi");
+    expect(derive(char(s, "c_kenpachi")).ac).toBe(11);
+  });
+
+  it("undo history saved before inventory undo (bare states) still works", async () => {
+    const s = await reload();
+    await s.apply("c_kenpachi", c => applyDamage(c, 5));
+    const old = (await db.history.get("c_kenpachi"))!;
+    await db.history.put({ id: "c_kenpachi", stack: old.stack.map(x => ("state" in x ? x.state : x)) });
+
+    const after = await reload();
+    await after.undo("c_kenpachi");
+    expect(char(after, "c_kenpachi").state.hp.current).toBe(51);
   });
 
   it("each character has its own undo stack", async () => {
