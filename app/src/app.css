@@ -30,6 +30,28 @@
   --color-info: var(--info);
 }
 
+@layer components {
+  /* 44px minimum tap target (N1.5). Disabled = muted text, not opacity, so it stays legible. */
+  .btn {
+    @apply inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-lg border-2 border-line bg-card px-3 font-semibold text-ink select-none hover:bg-well active:translate-y-px disabled:cursor-not-allowed disabled:border-line disabled:bg-card disabled:text-ink-muted disabled:active:translate-y-0;
+  }
+  .btn-primary {
+    @apply border-accent bg-accent text-on-accent hover:bg-accent;
+  }
+  .btn-danger {
+    @apply border-danger text-danger;
+  }
+  .btn-ok {
+    @apply border-ok text-ok;
+  }
+  .btn-info {
+    @apply border-info text-info;
+  }
+  .field {
+    @apply h-11 min-w-0 rounded-lg border-2 border-line bg-well px-3 text-ink placeholder:text-ink-muted;
+  }
+}
+
 @layer base {
   html {
     background-color: var(--page);
@@ -46,6 +68,15 @@
     outline: 3px solid var(--focus);
     outline-offset: 2px;
     border-radius: 6px;
+  }
+
+  input[type="number"] {
+    appearance: textfield;
+  }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    appearance: none;
+    margin: 0;
   }
 
   @media (prefers-reduced-motion: reduce) {

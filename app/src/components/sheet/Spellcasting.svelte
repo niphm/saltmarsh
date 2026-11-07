@@ -1,10 +1,11 @@
 <script lang="ts">
-  import type { Derived } from "@saltmarsh/schema";
+  import { restoreSlot, spendSlot, type Derived } from "@saltmarsh/schema";
+  import type { Change } from "../../lib/store.svelte";
   import { ABILITY_NAME, ordinal, signed } from "../../lib/format";
   import Card from "../Card.svelte";
-  import Pips from "../Pips.svelte";
+  import PipButtons from "../PipButtons.svelte";
 
-  let { spell }: { spell: NonNullable<Derived["spell"]> } = $props();
+  let { spell, act }: { spell: NonNullable<Derived["spell"]>; act: (change: Change) => void } = $props();
 </script>
 
 <Card title="Spellcasting">
@@ -27,11 +28,18 @@
     <h3 class="mt-4 mb-1 text-xs font-semibold tracking-wider text-ink-muted uppercase">Spell slots</h3>
     <ul>
       {#each spell.slots as total, i (i)}
-        <li class="flex min-h-9 items-center gap-3 border-b border-line last:border-b-0">
-          <span class="w-8 text-ink">{ordinal(i + 1)}</span>
-          <Pips {total} filled={spell.slotsRemaining[i]} />
-          <span class="ml-auto text-sm text-ink-muted tabular-nums" aria-hidden="true">
-            {spell.slotsRemaining[i]}/{total}
+        {@const level = i + 1}
+        <li class="flex min-h-12 items-center gap-3 border-b border-line last:border-b-0">
+          <span class="w-8 text-ink">{ordinal(level)}</span>
+          <span class="text-sm text-ink-muted tabular-nums" aria-hidden="true">{spell.slotsRemaining[i]}/{total}</span>
+          <span class="ml-auto">
+            <PipButtons
+              name="{ordinal(level)}-level slot"
+              {total}
+              filled={spell.slotsRemaining[i]}
+              onspend={() => act(ch => spendSlot(ch, level))}
+              onrestore={() => act(ch => restoreSlot(ch, level))}
+            />
           </span>
         </li>
       {/each}

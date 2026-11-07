@@ -43,6 +43,8 @@ const PAIRS: [string, string, number][] = [
   ...["ink", "ink-muted", "accent"].flatMap(fg => SURFACES.map(bg => [fg, bg, TEXT] as [string, string, number])),
   ...["danger", "warn", "ok", "info"].flatMap(fg => SURFACES.map(bg => [fg, bg, TEXT] as [string, string, number])),
   ["on-accent", "accent", TEXT],
+  // Filled status chips/pips (active conditions, death saves) put page-colored text on a status color.
+  ...["danger", "warn", "ok"].map(bg => ["page", bg, TEXT] as [string, string, number]),
   ...SURFACES.map(bg => ["focus", bg, UI] as [string, string, number]),
 ];
 

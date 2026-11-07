@@ -20,7 +20,8 @@
   Skip to content
 </button>
 
-<header class="sticky top-0 z-20 border-b border-line bg-card pt-[env(safe-area-inset-top)]">
+<!-- Not sticky: on a sheet the status bar is what stays on screen. -->
+<header class="border-b border-line bg-card pt-[env(safe-area-inset-top)]">
   <div class="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 px-4">
     <a
       href={characters[0] ? href.sheet(characters[0].id) : "#/"}

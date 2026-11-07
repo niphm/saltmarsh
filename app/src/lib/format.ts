@@ -2,7 +2,7 @@
  * Display formatting only. No rules math lives here - every number comes
  * from derive(); these helpers just turn values and ids into text.
  */
-import type { Ability, Character, Resource, Skill } from "@saltmarsh/schema";
+import type { Ability, Character, HpBand, Life, Resource, Skill } from "@saltmarsh/schema";
 
 export type ProfLevel = NonNullable<Character["proficiencies"]["skills"][Skill]>;
 
@@ -41,6 +41,13 @@ export const PROF_LABEL: Record<ProfLevel, string> = {
 export const RECHARGE_LABEL: Record<Resource["recharge"], string> = {
   short: "Short rest", long: "Long rest", initiative: "On initiative", dawn: "At dawn", turn: "Each turn", manual: "Manual",
 };
+
+export const HP_BAND_LABEL: Record<HpBand, string> = { full: "Full", injured: "Injured", critical: "Critical", down: "Down" };
+
+/** Status color class per band. Always shown next to the label, never alone. */
+export const HP_BAND_TEXT: Record<HpBand, string> = { full: "text-ok", injured: "text-warn", critical: "text-danger", down: "text-danger" };
+
+export const LIFE_LABEL: Record<Life, string> = { alive: "Alive", dying: "Dying", stable: "Stable", dead: "Dead" };
 
 /** "Sorcerer 5 (Divine Soul)" - joined with " / " for multiclass. */
 export const classLine = (classes: Character["classes"]) =>

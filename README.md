@@ -12,7 +12,9 @@ schema/src/schema/character.ts    Character document - identity, classes, resour
 schema/src/schema/party.ts        Party, members/roles, shared inventory, journal, encounters
 schema/src/engine/derive.ts       pure function: Character -> every computed number on the sheet
 schema/src/engine/rest.ts         short/long rest + initiative recharge, driven only by resource tags
-schema/src/engine/hp.ts           damage (temp HP first), healing (clamped), temp HP
+schema/src/engine/hp.ts           damage (temp HP first, death saves at 0), healing (clamped), temp HP
+schema/src/engine/resources.ts    spend/regain resources and spell slots, `state` resources on/off
+schema/src/engine/conditions.ts   conditions, exhaustion, free-text effects, concentration
 schema/src/validate.ts            parses the examples and prints the derived sheet
 schema/examples/                  Tidewick and Kenpachi as real documents
 schema/test/                      Vitest unit tests; the validate numbers are asserted here

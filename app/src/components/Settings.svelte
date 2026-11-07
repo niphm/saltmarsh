@@ -1,6 +1,15 @@
 <script lang="ts">
   import { THEMES } from "../themes";
   import { theme } from "../lib/theme.svelte";
+  import { characters } from "../lib/store.svelte";
+  import Dialog from "./Dialog.svelte";
+
+  let confirmReset = $state(false);
+
+  async function reset() {
+    confirmReset = false;
+    await characters.reset();
+  }
 </script>
 
 <h1 class="font-display text-3xl font-semibold text-ink">Settings</h1>
@@ -46,3 +55,21 @@
     </div>
   </fieldset>
 </section>
+
+<section aria-labelledby="data-heading" class="mt-4 rounded-xl border border-line bg-card p-4">
+  <h2 id="data-heading" class="font-display text-sm font-semibold tracking-widest text-accent uppercase">Local data</h2>
+  <p class="mt-1 text-sm text-ink-muted">
+    Characters and table state (HP, resources, conditions, undo history) are saved in this browser and work offline.
+  </p>
+  <button type="button" class="btn btn-danger mt-3" onclick={() => (confirmReset = true)}>Reset to bundled characters</button>
+</section>
+
+<Dialog bind:open={confirmReset} title="Reset local data?">
+  <p class="text-ink">
+    This puts every bundled character back to its starting state and clears undo history on this device. It can't be undone.
+  </p>
+  {#snippet footer()}
+    <button type="button" class="btn" onclick={() => (confirmReset = false)}>Cancel</button>
+    <button type="button" class="btn btn-danger" onclick={reset}>Reset</button>
+  {/snippet}
+</Dialog>

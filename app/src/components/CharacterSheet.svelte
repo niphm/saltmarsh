@@ -1,37 +1,45 @@
 <script lang="ts">
-  import { derive, type Character } from "@saltmarsh/schema";
+  import type { Character, Derived } from "@saltmarsh/schema";
+  import type { Change } from "../lib/store.svelte";
   import SheetHeader from "./sheet/SheetHeader.svelte";
+  import HpPanel from "./sheet/HpPanel.svelte";
+  import RestPanel from "./sheet/RestPanel.svelte";
   import VitalStats from "./sheet/VitalStats.svelte";
   import AbilityScores from "./sheet/AbilityScores.svelte";
   import ActiveEffects from "./sheet/ActiveEffects.svelte";
+  import Resources from "./sheet/Resources.svelte";
+  import Spellcasting from "./sheet/Spellcasting.svelte";
+  import Conditions from "./sheet/Conditions.svelte";
   import SavingThrows from "./sheet/SavingThrows.svelte";
   import Senses from "./sheet/Senses.svelte";
   import Skills from "./sheet/Skills.svelte";
-  import Spellcasting from "./sheet/Spellcasting.svelte";
-  import Resources from "./sheet/Resources.svelte";
   import Proficiencies from "./sheet/Proficiencies.svelte";
   import Features from "./sheet/Features.svelte";
 
-  let { character }: { character: Character } = $props();
-
-  // The only place numbers come from. Components display, they don't calculate.
-  const d = $derived(derive(character));
+  // `d` comes from derive() in App - components display numbers, they never calculate them.
+  // `act` applies an engine function to this character (saved + undoable).
+  let { character, d, act }: { character: Character; d: Derived; act: (change: Change) => void } = $props();
 </script>
 
 <div class="grid gap-3 md:grid-cols-2 md:gap-4">
   <div class="md:col-span-2"><SheetHeader c={character} {d} /></div>
-  <div class="md:col-span-2"><VitalStats c={character} {d} /></div>
+  <HpPanel c={character} {d} {act} />
+  <div class="flex flex-col gap-3 md:gap-4">
+    <RestPanel {d} {act} />
+    <VitalStats c={character} {d} />
+  </div>
   <div class="md:col-span-2"><AbilityScores c={character} {d} /></div>
   {#if d.active.ids.length}
     <div class="md:col-span-2"><ActiveEffects {d} /></div>
   {/if}
+  <Resources {d} {act} />
+  {#if d.spell}
+    <Spellcasting spell={d.spell} {act} />
+  {/if}
+  <Conditions c={character} {d} {act} />
   <SavingThrows c={character} {d} />
   <Senses c={character} {d} />
-  <div class="md:col-span-2"><Skills c={character} {d} /></div>
-  {#if d.spell}
-    <Spellcasting spell={d.spell} />
-  {/if}
-  <Resources {d} />
   <Proficiencies c={character} />
+  <div class="md:col-span-2"><Skills c={character} {d} /></div>
   <div class="md:col-span-2"><Features c={character} /></div>
 </div>
