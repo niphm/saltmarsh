@@ -6,17 +6,22 @@
 import type { Character } from "../schema/character";
 import { evalExpr } from "../schema/expression";
 import { derive } from "./derive";
+import { wholeAmount } from "./hp";
 import { stamp } from "./log";
 
 export interface ShortRestOptions {
+  /** Hit dice to spend. Clamped to the hit dice remaining. */
   hitDiceToSpend?: number;
-  /** Resource ids the player chose to trigger this rest (e.g. Sorcerous Restoration). */
+  /** HP the player rolled on those hit dice. Clamped to max HP. */
+  hpRegained?: number;
+  /** Resource ids the player chose to trigger this rest (resources with `shortRestTrigger`, e.g. Sorcerous Restoration). */
   optionalTriggers?: string[];
 }
 
 export function shortRest(c: Character, opts: ShortRestOptions = {}): Character {
   const d = derive(c);
   const spent = { ...c.state.spent };
+  const notes: string[] = [];
 
   for (const r of c.resources) {
     if (r.recharge !== "short") continue;
@@ -28,12 +33,36 @@ export function shortRest(c: Character, opts: ShortRestOptions = {}): Character 
     }
   }
 
-  // Hit dice healing: player rolls; we just record the spend and let them apply HP
-  const hitDiceSpent = c.state.hitDiceSpent + (opts.hitDiceToSpend ?? 0);
+  // Hit dice: the player rolls; we record the spend and apply the HP they rolled.
+  const hdLeft = d.hitDice.reduce((n, h) => n + h.remaining, 0);
+  const hd = Math.min(hdLeft, wholeAmount(opts.hitDiceToSpend ?? 0));
+  const hitDiceSpent = c.state.hitDiceSpent + hd;
+  if (hd) notes.push(`${hd} HD`);
+
+  let hp = c.state.hp;
+  let deathSaves = c.state.deathSaves;
+  const heal = Math.min(d.hpMax - hp.current, wholeAmount(opts.hpRegained ?? 0));
+  if (heal > 0) {
+    if (hp.current === 0) deathSaves = { success: 0, failure: 0 };
+    hp = { ...hp, current: hp.current + heal };
+    notes.push(`+${heal} HP`);
+  }
+
+  // Optional triggers: spend one use of the trigger, restore uses of its target.
+  for (const id of new Set(opts.optionalTriggers ?? [])) {
+    const r = d.resources.find(x => x.id === id);
+    if (!r?.shortRestTrigger || r.remaining <= 0) continue;
+    spent[r.id] = (spent[r.id] ?? 0) + 1;
+    const target = r.shortRestTrigger.restores;
+    const left = Math.max(0, (spent[target] ?? 0) - r.shortRestTrigger.amount);
+    if (left === 0) delete spent[target];
+    else spent[target] = left;
+    notes.push(r.name);
+  }
 
   return {
     ...c,
-    state: { ...c.state, spent, hitDiceSpent, log: stamp(c, `short rest${opts.hitDiceToSpend ? ` (${opts.hitDiceToSpend} HD)` : ""}`) },
+    state: { ...c.state, hp, deathSaves, spent, hitDiceSpent, log: stamp(c, `short rest${notes.length ? ` (${notes.join(", ")})` : ""}`) },
     updatedAt: new Date().toISOString(),
   };
 }

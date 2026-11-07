@@ -59,6 +59,12 @@ export const Resource = z.object({
   source: Ref.optional(),                  // feature that grants this, for tooltips
   group: z.string().optional(),            // UI section: "Class", "Species", "Magic Items", "Free Casts"
   description: z.string().optional(),
+  /**
+   * Optional effect the player may choose during a Short Rest (Sorcerous
+   * Restoration). Choosing it spends one use of this resource and restores
+   * `amount` spent uses of the resource `restores`.
+   */
+  shortRestTrigger: z.object({ restores: Id, amount: Expr }).optional(),
   /** Optional effects applied while a `state` resource is on. */
   whileActive: z.object({
     acBonus: z.number().optional(),
@@ -195,6 +201,7 @@ export const Condition = z.enum([
   "blinded", "charmed", "deafened", "exhaustion", "frightened", "grappled", "incapacitated",
   "invisible", "paralyzed", "petrified", "poisoned", "prone", "restrained", "stunned", "unconscious",
 ]);
+export type Condition = z.infer<typeof Condition>;
 
 export const CharacterState = z.object({
   hp: z.object({

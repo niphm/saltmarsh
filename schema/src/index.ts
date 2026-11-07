@@ -5,4 +5,6 @@ export * from "./schema/party";
 export * from "./engine/derive";
 export * from "./engine/rest";
 export * from "./engine/hp";
+export * from "./engine/resources";
+export * from "./engine/conditions";
 export { LOG_LIMIT } from "./engine/log";

@@ -122,6 +122,49 @@ describe("short rest", () => {
   });
 });
 
+describe("short rest: hit dice HP and optional triggers (F1.9)", () => {
+  const t = loadExample("tidewick"); // 5d6 hit dice, max HP 34
+
+  it("applies the HP the player rolled, clamped to max", () => {
+    const hurt = withState(t, { hp: { current: 20, temp: 0 } });
+    const r = shortRest(hurt, { hitDiceToSpend: 2, hpRegained: 11 });
+    expect(r.state.hp.current).toBe(31);
+    expect(r.state.hitDiceSpent).toBe(2);
+    expect(r.state.log.at(-1)?.change).toBe("short rest (2 HD, +11 HP)");
+    expect(shortRest(hurt, { hitDiceToSpend: 5, hpRegained: 99 }).state.hp.current).toBe(34);
+  });
+
+  it("can't spend more hit dice than remain", () => {
+    const r = shortRest(withState(t, { hitDiceSpent: 3 }), { hitDiceToSpend: 9 });
+    expect(r.state.hitDiceSpent).toBe(5);
+    expect(r.state.log.at(-1)?.change).toBe("short rest (2 HD)");
+  });
+
+  it("healing from 0 resets death saves", () => {
+    const down = withState(t, { hp: { current: 0, temp: 0 }, deathSaves: { success: 3, failure: 1 } });
+    const r = shortRest(down, { hitDiceToSpend: 1, hpRegained: 4 });
+    expect(r.state.hp.current).toBe(4);
+    expect(r.state.deathSaves).toEqual({ success: 0, failure: 0 });
+  });
+
+  it("Sorcerous Restoration: spends itself, restores floor(sorcerer level / 2) Sorcery Points", () => {
+    expect(derive(t).resources.find(r => r.id === "sorcerous-restoration")?.shortRestTrigger).toEqual({ restores: "sorcery-points", amount: 2 });
+    const drained = withState(t, { spent: { "sorcery-points": 4 } });
+    const r = shortRest(drained, { optionalTriggers: ["sorcerous-restoration"] });
+    expect(remaining(r)).toMatchObject({ "sorcery-points": 3, "sorcerous-restoration": 0 });
+    expect(r.state.log.at(-1)?.change).toBe("short rest (Sorcerous Restoration)");
+
+    // Already used: a second short rest can't trigger it again.
+    const again = shortRest(r, { optionalTriggers: ["sorcerous-restoration"] });
+    expect(remaining(again)["sorcery-points"]).toBe(3);
+  });
+
+  it("restoring never goes below zero spent; unknown or non-trigger ids are ignored", () => {
+    const r = shortRest(withState(t, { spent: { "sorcery-points": 1 } }), { optionalTriggers: ["sorcerous-restoration", "free-command", "nope"] });
+    expect(r.state.spent).toEqual({ "sorcerous-restoration": 1 });
+  });
+});
+
 describe("initiative recharge", () => {
   it("resets only `initiative` resources", () => {
     const base = loadExample("kenpachi");

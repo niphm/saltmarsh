@@ -41,7 +41,8 @@
     { "id": "innate-sorcery", "name": "Innate Sorcery", "kind": "pips", "max": 2, "recharge": "long", "group": "Class" },
     { "id": "favored-by-the-gods", "name": "Favored by the Gods", "kind": "toggle", "max": 1, "recharge": "short", "group": "Subclass" },
     { "id": "sorcerous-restoration", "name": "Sorcerous Restoration", "kind": "toggle", "max": 1, "recharge": "long", "group": "Class",
-      "description": "When used on a Short Rest, regain 2 Sorcery Points." },
+      "description": "When used on a Short Rest, regain 2 Sorcery Points.",
+      "shortRestTrigger": { "restores": "sorcery-points", "amount": "floor(classLevel.sorcerer / 2)" } },
     { "id": "free-mage-armor", "name": "Mage Armor", "kind": "toggle", "max": 1, "recharge": "long", "group": "Free Casts" },
     { "id": "free-command", "name": "Command", "kind": "toggle", "max": 1, "recharge": "long", "group": "Free Casts" },
     { "id": "free-misty-step", "name": "Misty Step", "kind": "toggle", "max": 1, "recharge": "long", "group": "Free Casts" }

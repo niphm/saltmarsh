@@ -27,7 +27,16 @@ export const mod = (score: number) => Math.floor((score - 10) / 2);
 export interface DerivedResource {
   id: string; name: string; kind: Resource["kind"]; group?: string;
   max: number; spent: number; remaining: number; active: boolean; recharge: Resource["recharge"];
+  description?: string;
+  /** Short-rest option this resource offers, with `amount` already evaluated. */
+  shortRestTrigger?: { restores: string; amount: number };
 }
+
+/** alive: HP > 0. dying: 0 HP, fewer than 3 successes/failures. stable: 3 successes. dead: 3 failures. */
+export type Life = "alive" | "dying" | "stable" | "dead";
+
+/** F2.7 bands: full 100%, injured 25-99%, critical below 25%, down at 0. */
+export type HpBand = "full" | "injured" | "critical" | "down";
 
 export interface Derived {
   level: number;
@@ -47,6 +56,10 @@ export interface Derived {
   defenses: { resistances: string[]; immunities: string[]; conditionImmunities: string[] };
   /** Effects folded in from active `state` resources (Raging, Large Form, ...). */
   active: { ids: string[]; damageBonus: number; advantageOn: string[]; blocks: string[] };
+  life: Life;
+  hpBand: HpBand;
+  /** 2024 exhaustion: -2 per level to every D20 Test, -5 ft speed per level (already folded into `speed`). */
+  exhaustion: { level: number; d20Penalty: number; speedPenalty: number };
   ctx: ExprContext;
 }
 
@@ -107,13 +120,28 @@ export function derive(c: Character): Derived {
   // Active state resources (Large Form etc.) can add
   const activeRes = c.resources.filter(r => c.state.active.includes(r.id));
   ac += activeRes.reduce((n, r) => n + (r.whileActive?.acBonus ?? 0), 0);
-  const speed = (c.state.speedOverride ?? c.speed.walk) + activeRes.reduce((n, r) => n + (r.whileActive?.speedBonus ?? 0), 0);
+
+  // Exhaustion (2024): a level with no number counts as 1; 6 levels max.
+  const exh = c.state.conditions.find(x => x.condition === "exhaustion");
+  const exhaustionLevel = exh ? Math.min(6, Math.max(1, exh.level ?? 1)) : 0;
+  const exhaustion = { level: exhaustionLevel, d20Penalty: 2 * exhaustionLevel, speedPenalty: 5 * exhaustionLevel };
+
+  const speed = Math.max(0,
+    (c.state.speedOverride ?? c.speed.walk)
+    + activeRes.reduce((n, r) => n + (r.whileActive?.speedBonus ?? 0), 0)
+    - exhaustion.speedPenalty);
 
   // Resources
   const resources: DerivedResource[] = c.resources.map(r => {
     const max = Math.max(0, Math.floor(evalExpr(r.max, ctx)));
-    const spent = c.state.spent[r.id] ?? 0;
-    return { id: r.id, name: r.name, kind: r.kind, group: r.group, max, spent, remaining: Math.max(0, max - spent), active: c.state.active.includes(r.id), recharge: r.recharge };
+    const spent = Math.min(max, c.state.spent[r.id] ?? 0);
+    return {
+      id: r.id, name: r.name, kind: r.kind, group: r.group, max, spent, remaining: max - spent,
+      active: c.state.active.includes(r.id), recharge: r.recharge, description: r.description,
+      shortRestTrigger: r.shortRestTrigger
+        ? { restores: r.shortRestTrigger.restores, amount: Math.max(0, Math.floor(evalExpr(r.shortRestTrigger.amount, ctx))) }
+        : undefined,
+    };
   });
 
   const hitDice = c.classes.map(k => ({ size: k.hitDie, total: k.level, remaining: k.level })); // TODO per-class spent
@@ -132,10 +160,16 @@ export function derive(c: Character): Derived {
     blocks: uniq(activeRes.flatMap(r => r.whileActive?.blocks ?? [])),
   };
 
+  // Life and HP band
+  const hp = c.state.hp.current;
+  const { success, failure } = c.state.deathSaves;
+  const life: Life = hp > 0 ? "alive" : failure >= 3 ? "dead" : success >= 3 ? "stable" : "dying";
+  const hpBand: HpBand = hp <= 0 ? "down" : hp >= hpMax ? "full" : hp < hpMax / 4 ? "critical" : "injured";
+
   return {
     level, prof, mods, saves, skills,
     passive: { perception: 10 + skills.perception, insight: 10 + skills.insight, investigation: 10 + skills.investigation },
     initiative: mods.dex,
-    hpMax, ac, speed, spell, resources, hitDice, defenses, active, ctx,
+    hpMax, ac, speed, spell, resources, hitDice, defenses, active, life, hpBand, exhaustion, ctx,
   };
 }

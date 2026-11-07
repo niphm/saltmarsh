@@ -1,6 +1,84 @@
 import { describe, expect, it } from "vitest";
-import { applyDamage, applyHealing, setTempHp } from "../src/engine/hp";
+import { derive } from "../src/engine/derive";
+import { applyDamage, applyHealing, setDeathSaves, setTempHp } from "../src/engine/hp";
 import { loadExample, withState } from "./fixtures";
+
+describe("dropping to 0 and death saves (2024)", () => {
+  const t = loadExample("tidewick"); // max HP 34
+
+  it("dropping to 0 starts fresh death saves and shows dying", () => {
+    const stale = withState(t, { hp: { current: 5, temp: 0 }, deathSaves: { success: 1, failure: 1 } });
+    const r = applyDamage(stale, 8);
+    expect(r.state.hp.current).toBe(0);
+    expect(r.state.deathSaves).toEqual({ success: 0, failure: 0 });
+    expect(r.state.log.at(-1)?.change).toBe("hp -8 - down");
+    expect(derive(r)).toMatchObject({ life: "dying", hpBand: "down" });
+  });
+
+  it("damage while at 0 is one failed death save; three is dead", () => {
+    let r = withState(t, { hp: { current: 0, temp: 0 }, deathSaves: { success: 1, failure: 1 } });
+    r = applyDamage(r, 3);
+    expect(r.state.deathSaves).toEqual({ success: 1, failure: 2 });
+    expect(r.state.log.at(-1)?.change).toBe("hp -3 - death save failed");
+    r = applyDamage(r, 3);
+    expect(r.state.deathSaves.failure).toBe(3);
+    expect(derive(r).life).toBe("dead");
+  });
+
+  it("leftover damage >= max HP kills outright", () => {
+    const r = applyDamage(withState(t, { hp: { current: 10, temp: 0 } }), 44);
+    expect(r.state.deathSaves.failure).toBe(3);
+    expect(derive(r).life).toBe("dead");
+    expect(r.state.log.at(-1)?.change).toBe("hp -44 - killed outright");
+  });
+
+  it("damage >= max HP while at 0 kills outright", () => {
+    const r = applyDamage(withState(t, { hp: { current: 0, temp: 0 } }), 34);
+    expect(derive(r).life).toBe("dead");
+  });
+
+  it("temp HP that absorbs all the damage at 0 means no failed save", () => {
+    const r = applyDamage(withState(t, { hp: { current: 0, temp: 5 } }), 4);
+    expect(r.state.deathSaves).toEqual({ success: 0, failure: 0 });
+    expect(r.state.hp.temp).toBe(1);
+  });
+
+  it("setDeathSaves clamps 0-3; three successes is stable", () => {
+    const down = withState(t, { hp: { current: 0, temp: 0 } });
+    const r = setDeathSaves(down, 5, -2);
+    expect(r.state.deathSaves).toEqual({ success: 3, failure: 0 });
+    expect(derive(r).life).toBe("stable");
+    expect(setDeathSaves(r, 3, 0)).toBe(r);
+  });
+});
+
+describe("HP bands (F2.7 thresholds)", () => {
+  const k = loadExample("kenpachi"); // max 51; 25% = 12.75
+  it.each([
+    [51, "full"],
+    [50, "injured"],
+    [13, "injured"],
+    [12, "critical"],
+    [1, "critical"],
+    [0, "down"],
+  ] as const)("%d/51 is %s", (current, band) => {
+    expect(derive(withState(k, { hp: { current, temp: 0 } })).hpBand).toBe(band);
+  });
+});
+
+describe("no-ops return the same object", () => {
+  const k = loadExample("kenpachi");
+  it("zero damage, healing at full, unchanged temp", () => {
+    expect(applyDamage(k, 0)).toBe(k);
+    expect(applyHealing(k, 5)).toBe(k);
+    expect(setTempHp(k, 0)).toBe(k);
+  });
+
+  it("healing logs what was actually healed", () => {
+    const t = withState(loadExample("tidewick"), { hp: { current: 30, temp: 0 } });
+    expect(applyHealing(t, 100).state.log.at(-1)?.change).toBe("hp +4");
+  });
+});
 
 describe("acceptance: temp HP absorbs damage first (REQUIREMENTS 7)", () => {
   it("take 10 damage with 4 temp HP: temp goes to 0, HP drops 6", () => {
