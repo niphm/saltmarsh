@@ -1,0 +1,323 @@
+{
+  "schemaVersion": 1,
+  "id": "c_kenpachi",
+  "ownerId": "u_kenpachi",
+  "partyId": "p_saltmarsh",
+  "identity": {
+    "name": "Kenpachi",
+    "species": "srd:species:orc",
+    "background": "srd:background:soldier"
+  },
+  "classes": [
+    {
+      "class": "srd:class:barbarian",
+      "subclass": "srd:subclass:berserker",
+      "level": 5,
+      "hitDie": 12
+    }
+  ],
+  "abilityScores": {
+    "str": 19,
+    "dex": 9,
+    "con": 11,
+    "int": 16,
+    "wis": 15,
+    "cha": 16
+  },
+  "speed": {
+    "walk": 40
+  },
+  "senses": [
+    {
+      "kind": "darkvision",
+      "range": 120
+    }
+  ],
+  "proficiencies": {
+    "saves": [
+      "str",
+      "con"
+    ],
+    "skills": {
+      "athletics": "proficient",
+      "nature": "proficient",
+      "animal-handling": "proficient",
+      "survival": "proficient",
+      "intimidation": "proficient"
+    },
+    "armor": [
+      "light",
+      "medium",
+      "shields"
+    ],
+    "weapons": [
+      "simple",
+      "martial"
+    ],
+    "masteries": [
+      "vex",
+      "push",
+      "slow"
+    ]
+  },
+  "features": [
+    {
+      "ref": "srd:feature:rage",
+      "name": "Rage",
+      "source": "Barbarian 1"
+    },
+    {
+      "ref": "srd:feature:unarmored-defense-barbarian",
+      "name": "Unarmored Defense",
+      "source": "Barbarian 1",
+      "summary": "AC = 10 + Dex + Con while not wearing armor."
+    },
+    {
+      "ref": "srd:feature:reckless-attack",
+      "name": "Reckless Attack",
+      "source": "Barbarian 2"
+    },
+    {
+      "ref": "srd:feature:danger-sense",
+      "name": "Danger Sense",
+      "source": "Barbarian 2"
+    },
+    {
+      "ref": "srd:feature:frenzy",
+      "name": "Frenzy",
+      "source": "Berserker 3",
+      "summary": "Reckless Attack while raging: first hit each turn deals +2d6."
+    },
+    {
+      "ref": "srd:feature:extra-attack",
+      "name": "Extra Attack",
+      "source": "Barbarian 5"
+    },
+    {
+      "ref": "srd:feature:fast-movement",
+      "name": "Fast Movement",
+      "source": "Barbarian 5"
+    },
+    {
+      "ref": "srd:feature:adrenaline-rush",
+      "name": "Adrenaline Rush",
+      "source": "Orc",
+      "summary": "Bonus Action Dash; gain temp HP equal to proficiency bonus."
+    },
+    {
+      "ref": "srd:feature:relentless-endurance",
+      "name": "Relentless Endurance",
+      "source": "Orc",
+      "summary": "When reduced to 0 HP but not killed, drop to 1 HP instead."
+    },
+    {
+      "ref": "srd:feature:primal-knowledge",
+      "name": "Primal Knowledge",
+      "source": "Barbarian 3",
+      "summary": "Proficiency in Animal Handling."
+    },
+    {
+      "ref": "srd:feat:savage-attacker",
+      "name": "Savage Attacker",
+      "source": "Feat",
+      "summary": "Once per turn, roll weapon damage twice and use either."
+    },
+    {
+      "ref": "srd:feat:tough",
+      "name": "Tough",
+      "source": "Feat",
+      "summary": "+2 HP per level."
+    }
+  ],
+  "resources": [
+    {
+      "id": "rage-uses",
+      "name": "Rage",
+      "kind": "pips",
+      "max": 3,
+      "recharge": "short",
+      "rechargeAmount": 1,
+      "group": "Class",
+      "source": "srd:feature:rage",
+      "description": "Regain one use on a Short Rest, all on a Long Rest."
+    },
+    {
+      "id": "rage-active",
+      "name": "Raging",
+      "kind": "state",
+      "max": 1,
+      "recharge": "manual",
+      "group": "Class",
+      "whileActive": {
+        "damageBonus": 2,
+        "resistances": [
+          "bludgeoning",
+          "piercing",
+          "slashing"
+        ],
+        "advantageOn": [
+          "str-checks",
+          "str-saves"
+        ],
+        "blocks": [
+          "spellcasting",
+          "concentration"
+        ]
+      }
+    },
+    {
+      "id": "adrenaline-rush",
+      "name": "Adrenaline Rush",
+      "kind": "pips",
+      "max": "prof",
+      "recharge": "long",
+      "group": "Species"
+    },
+    {
+      "id": "relentless-endurance",
+      "name": "Relentless Endurance",
+      "kind": "toggle",
+      "max": 1,
+      "recharge": "long",
+      "group": "Species"
+    }
+  ],
+  "attacks": [
+    {
+      "id": "atk-warhammer",
+      "name": "Warhammer",
+      "itemId": "i-warhammer",
+      "ability": "str",
+      "damage": [
+        {
+          "dice": "1d8",
+          "bonusExpr": "mod.str",
+          "type": "bludgeoning"
+        },
+        {
+          "dice": "1d10",
+          "bonusExpr": "mod.str",
+          "type": "bludgeoning",
+          "when": "two-handed"
+        },
+        {
+          "dice": "0",
+          "bonusExpr": "2",
+          "type": "bludgeoning",
+          "when": "rage"
+        },
+        {
+          "dice": "2d6",
+          "type": "bludgeoning",
+          "when": "frenzy"
+        }
+      ],
+      "properties": [
+        "versatile (1d10)"
+      ],
+      "mastery": "push"
+    },
+    {
+      "id": "atk-javelin",
+      "name": "Javelin",
+      "itemId": "i-javelin",
+      "ability": "str",
+      "damage": [
+        {
+          "dice": "1d6",
+          "bonusExpr": "mod.str",
+          "type": "piercing"
+        }
+      ],
+      "properties": [
+        "thrown (30/120)"
+      ],
+      "mastery": "slow",
+      "range": "30/120"
+    },
+    {
+      "id": "atk-pistol",
+      "name": "Pistol",
+      "itemId": "i-pistol",
+      "ability": "dex",
+      "damage": [
+        {
+          "dice": "1d10",
+          "bonusExpr": "mod.dex",
+          "type": "piercing"
+        }
+      ],
+      "properties": [
+        "ammunition (30/90)",
+        "loading"
+      ],
+      "mastery": "vex",
+      "range": "30/90"
+    }
+  ],
+  "inventory": {
+    "coins": {
+      "gp": 0
+    },
+    "items": [
+      {
+        "id": "i-warhammer",
+        "name": "Warhammer",
+        "category": "weapon",
+        "qty": 1,
+        "equipped": true,
+        "weight": 2
+      },
+      {
+        "id": "i-javelin",
+        "name": "Javelin",
+        "category": "weapon",
+        "qty": 1,
+        "equipped": true,
+        "weight": 2
+      },
+      {
+        "id": "i-pistol",
+        "name": "Pistol",
+        "category": "weapon",
+        "qty": 1,
+        "equipped": true,
+        "weight": 3
+      },
+      {
+        "id": "i-shield",
+        "name": "Shield",
+        "category": "shield",
+        "qty": 1,
+        "equipped": true,
+        "weight": 6,
+        "equipEffect": {
+          "acBonus": 2
+        }
+      }
+    ]
+  },
+  "hpMax": 51,
+  "notes": "Sheet shows AC 16 but Unarmored Defense is 9 and shield is +2, so AC resolves to 11. Confirmed with David 2026-11-07.",
+  "state": {
+    "hp": {
+      "current": 51,
+      "temp": 0
+    },
+    "spent": {},
+    "active": [],
+    "slotsSpent": {},
+    "hitDiceSpent": 0,
+    "deathSaves": {
+      "success": 0,
+      "failure": 0
+    },
+    "concentration": null,
+    "conditions": [],
+    "effects": [],
+    "inspiration": false,
+    "log": []
+  },
+  "createdAt": "2026-11-07T17:00:00Z",
+  "updatedAt": "2026-11-07T17:00:00Z"
+}

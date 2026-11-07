@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "id": "c_tidewick",
+  "ownerId": "u_david",
+  "partyId": "p_saltmarsh",
+  "identity": {
+    "name": "Tidewick Grayholt",
+    "species": "srd:species:halfling",
+    "background": "srd:background:sage"
+  },
+  "classes": [
+    { "class": "srd:class:sorcerer", "subclass": "srd:subclass:divine-soul", "level": 5, "hitDie": 6 }
+  ],
+  "abilityScores": { "str": 10, "dex": 14, "con": 14, "int": 9, "wis": 13, "cha": 16 },
+  "speed": { "walk": 30 },
+  "size": "small",
+  "senses": [],
+  "proficiencies": {
+    "saves": ["con", "cha"],
+    "skills": { "arcana": "proficient", "history": "proficient", "insight": "proficient", "religion": "proficient" },
+    "weapons": ["simple"],
+    "tools": ["Calligrapher's Supplies", "Herbalism Kit"],
+    "languages": ["Common", "Elvish", "Halfling"]
+  },
+  "features": [
+    { "ref": "srd:feature:innate-sorcery", "name": "Innate Sorcery", "source": "Sorcerer 1",
+      "summary": "Bonus Action: 1 minute of +1 spell save DC and advantage on Sorcerer spell attacks." },
+    { "ref": "srd:feature:font-of-magic", "name": "Font of Magic", "source": "Sorcerer 2" },
+    { "ref": "srd:feature:metamagic", "name": "Metamagic", "source": "Sorcerer 2" },
+    { "ref": "srd:feature:sorcerous-restoration", "name": "Sorcerous Restoration", "source": "Sorcerer 5",
+      "summary": "Short Rest: regain up to 2 spent Sorcery Points. Once per Long Rest." },
+    { "ref": "srd:feature:favored-by-the-gods", "name": "Favored by the Gods", "source": "Divine Soul 3",
+      "summary": "After failing a save or missing an attack, add 2d4 to the roll." },
+    { "ref": "srd:feature:lucky-halfling", "name": "Lucky", "source": "Halfling",
+      "summary": "Reroll a 1 on a d20 Test." },
+    { "ref": "srd:feature:brave", "name": "Brave", "source": "Halfling" }
+  ],
+  "resources": [
+    { "id": "sorcery-points", "name": "Sorcery Points", "kind": "counter", "max": "classLevel.sorcerer",
+      "recharge": "long", "group": "Class", "source": "srd:feature:font-of-magic" },
+    { "id": "innate-sorcery", "name": "Innate Sorcery", "kind": "pips", "max": 2, "recharge": "long", "group": "Class" },
+    { "id": "favored-by-the-gods", "name": "Favored by the Gods", "kind": "toggle", "max": 1, "recharge": "short", "group": "Subclass" },
+    { "id": "sorcerous-restoration", "name": "Sorcerous Restoration", "kind": "toggle", "max": 1, "recharge": "long", "group": "Class",
+      "description": "When used on a Short Rest, regain 2 Sorcery Points." },
+    { "id": "free-mage-armor", "name": "Mage Armor", "kind": "toggle", "max": 1, "recharge": "long", "group": "Free Casts" },
+    { "id": "free-command", "name": "Command", "kind": "toggle", "max": 1, "recharge": "long", "group": "Free Casts" },
+    { "id": "free-misty-step", "name": "Misty Step", "kind": "toggle", "max": 1, "recharge": "long", "group": "Free Casts" }
+  ],
+  "spellcasting": {
+    "ability": "cha",
+    "progression": "full",
+    "options": [
+      { "ref": "srd:metamagic:distant-spell", "cost": 1 },
+      { "ref": "srd:metamagic:subtle-spell", "cost": 1 }
+    ],
+    "spells": [
+      { "ref": "srd:spell:prestidigitation", "source": "Sorcerer" },
+      { "ref": "srd:spell:chill-touch", "source": "Sorcerer" },
+      { "ref": "srd:spell:blade-ward", "source": "Sorcerer" },
+      { "ref": "srd:spell:light", "source": "Sorcerer" },
+      { "ref": "srd:spell:message", "source": "Sorcerer" },
+      { "ref": "srd:spell:sorcerous-burst", "source": "Sorcerer" },
+      { "ref": "srd:spell:ray-of-frost", "source": "Sorcerer" },
+      { "ref": "srd:spell:mage-armor", "source": "Sorcerer", "freeCastResource": "free-mage-armor" },
+      { "ref": "srd:spell:cure-wounds", "source": "Divine Soul" },
+      { "ref": "srd:spell:fog-cloud", "source": "Sorcerer" },
+      { "ref": "srd:spell:thunderwave", "source": "Sorcerer" },
+      { "ref": "srd:spell:witch-bolt", "source": "Sorcerer" },
+      { "ref": "srd:spell:command", "source": "Sorcerer", "freeCastResource": "free-command" },
+      { "ref": "srd:spell:misty-step", "source": "Sorcerer", "freeCastResource": "free-misty-step" },
+      { "ref": "srd:spell:gust-of-wind", "source": "Sorcerer" },
+      { "ref": "srd:spell:suggestion", "source": "Sorcerer" },
+      { "ref": "srd:spell:hypnotic-pattern", "source": "Sorcerer" }
+    ]
+  },
+  "attacks": [
+    { "id": "atk-dagger", "name": "Dagger", "ability": "dex",
+      "damage": [{ "dice": "1d4", "bonusExpr": "mod.dex", "type": "piercing" }],
+      "properties": ["finesse", "light", "thrown (20/60)"], "mastery": "nick" }
+  ],
+  "inventory": {
+    "coins": { "gp": 0 },
+    "items": [
+      { "id": "i-dagger", "name": "Dagger", "category": "weapon", "qty": 1, "equipped": true, "weight": 1 },
+      { "id": "i-focus", "name": "Arcane Focus (crystal)", "category": "gear", "qty": 1, "equipped": true }
+    ]
+  },
+  "hpMax": 34,
+  "notes": "",
+  "state": {
+    "hp": { "current": 34, "temp": 0 },
+    "spent": {},
+    "active": [],
+    "slotsSpent": {},
+    "hitDiceSpent": 0,
+    "deathSaves": { "success": 0, "failure": 0 },
+    "concentration": null,
+    "conditions": [],
+    "effects": [],
+    "inspiration": false,
+    "log": []
+  },
+  "createdAt": "2026-11-07T17:00:00Z",
+  "updatedAt": "2026-11-07T17:00:00Z"
+}
