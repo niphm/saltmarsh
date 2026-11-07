@@ -83,10 +83,31 @@ export interface Derived {
   hpBand: HpBand;
   /** 2024 exhaustion: -2 per level to every D20 Test, -5 ft speed per level (already folded into `speed`). */
   exhaustion: { level: number; d20Penalty: number; speedPenalty: number };
+  inventory: {
+    /** All coins converted to gold pieces. */
+    gp: number;
+    /** Total carried weight in lb (quantity x weight). */
+    weight: number;
+    attuned: number;
+    attunementLimit: number;
+    /** Item charges with `max` evaluated, keyed by item id. */
+    charges: Record<string, { current: number; max: number }>;
+  };
   ctx: ExprContext;
 }
 
 const uniq = (xs: string[]) => [...new Set(xs)];
+
+/** A creature can be attuned to at most three magic items at once. */
+export const ATTUNEMENT_LIMIT = 3;
+
+/** Coin values in copper pieces (1 pp = 10 gp, 1 ep = 5 sp). */
+export const COIN_CP = { cp: 1, sp: 10, ep: 50, gp: 100, pp: 1000 } as const;
+export type Coin = keyof typeof COIN_CP;
+
+/** Total value in gp, computed in whole copper to avoid float drift. */
+export const coinsInGp = (coins: Record<Coin, number>) =>
+  (Object.keys(COIN_CP) as Coin[]).reduce((n, k) => n + (coins[k] ?? 0) * COIN_CP[k], 0) / 100;
 
 export function derive(c: Character): Derived {
   const level = c.classes.reduce((n, k) => n + k.level, 0);
@@ -210,6 +231,16 @@ export function derive(c: Character): Derived {
     level, prof, mods, saves, skills,
     passive: { perception: 10 + skills.perception, insight: 10 + skills.insight, investigation: 10 + skills.investigation },
     initiative: mods.dex,
-    hpMax, ac, speed, spell, resources, hitDice, defenses, active, attacks, life, hpBand, exhaustion, ctx,
+    hpMax, ac, speed, spell, resources, hitDice, defenses, active, attacks, life, hpBand, exhaustion,
+    inventory: {
+      gp: coinsInGp(c.inventory.coins),
+      weight: Math.round(c.inventory.items.reduce((n, i) => n + i.qty * (i.weight ?? 0), 0) * 10) / 10,
+      attuned: c.inventory.items.filter(i => i.attuned).length,
+      attunementLimit: ATTUNEMENT_LIMIT,
+      charges: Object.fromEntries(c.inventory.items.flatMap(i => i.charges
+        ? [[i.id, { current: i.charges.current, max: Math.max(0, Math.floor(evalExpr(i.charges.max, ctx))) }]]
+        : [])),
+    },
+    ctx,
   };
 }
