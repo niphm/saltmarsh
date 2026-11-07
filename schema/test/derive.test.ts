@@ -67,7 +67,7 @@ describe("derive: Tidewick Grayholt", () => {
 
   it("no resistances, nothing active", () => {
     expect(d.defenses).toEqual({ resistances: [], immunities: [], conditionImmunities: [] });
-    expect(d.active).toEqual({ ids: [], damageBonus: 0, advantageOn: [], blocks: [] });
+    expect(d.active).toEqual({ ids: [], damageBonus: 0, advantageOn: [], blocks: [], tags: [] });
   });
 
   it("slotsRemaining follows slotsSpent", () => {
@@ -145,6 +145,7 @@ describe("derive: state resources fold whileActive into the sheet", () => {
       damageBonus: 2,
       advantageOn: ["str-checks", "str-saves"],
       blocks: ["spellcasting", "concentration"],
+      tags: ["rage"],
     });
   });
 

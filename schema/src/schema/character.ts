@@ -73,6 +73,8 @@ export const Resource = z.object({
     resistances: z.array(z.string()).optional(),
     advantageOn: z.array(z.string()).optional(),   // free text tags: "str-checks", "str-saves"
     blocks: z.array(z.string()).optional(),         // "spellcasting", "concentration"
+    /** Situational tags this state turns on; attack damage lines with a matching `when` apply. */
+    tags: z.array(z.string()).optional(),           // "rage"
   }).optional(),
 });
 export type Resource = z.infer<typeof Resource>;

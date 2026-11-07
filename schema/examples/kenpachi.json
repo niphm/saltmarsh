@@ -162,6 +162,9 @@
         "blocks": [
           "spellcasting",
           "concentration"
+        ],
+        "tags": [
+          "rage"
         ]
       }
     },
@@ -227,6 +230,12 @@
           "dice": "1d6",
           "bonusExpr": "mod.str",
           "type": "piercing"
+        },
+        {
+          "dice": "0",
+          "bonusExpr": "2",
+          "type": "piercing",
+          "when": "rage"
         }
       ],
       "properties": [

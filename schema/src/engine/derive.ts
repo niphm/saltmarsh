@@ -32,6 +32,28 @@ export interface DerivedResource {
   shortRestTrigger?: { restores: string; amount: number };
 }
 
+export interface DerivedDamage {
+  dice: string;          // "1d8", "0" for a flat bonus
+  bonus: number;         // bonusExpr evaluated
+  type: string;
+  /** Situational tag ("rage", "two-handed"). Undefined = always applies. */
+  when?: string;
+  /** True for unconditional lines, and for `when` lines whose tag an active state turns on. */
+  active: boolean;
+}
+
+export interface DerivedAttack {
+  id: string; name: string; ability: Ability;
+  toHit: number;
+  damage: DerivedDamage[];
+  properties: string[];
+  range?: string;
+  mastery?: string;
+  /** The character can use this weapon's mastery property (it's in proficiencies.masteries). */
+  masteryActive: boolean;
+  notes?: string;
+}
+
 /** alive: HP > 0. dying: 0 HP, fewer than 3 successes/failures. stable: 3 successes. dead: 3 failures. */
 export type Life = "alive" | "dying" | "stable" | "dead";
 
@@ -54,8 +76,9 @@ export interface Derived {
   hitDice: { size: number; total: number; remaining: number }[];
   /** Document defenses plus resistances granted by active `state` resources. */
   defenses: { resistances: string[]; immunities: string[]; conditionImmunities: string[] };
-  /** Effects folded in from active `state` resources (Raging, Large Form, ...). */
-  active: { ids: string[]; damageBonus: number; advantageOn: string[]; blocks: string[] };
+  /** Effects folded in from active `state` resources (Raging, Large Form, ...). `tags` light up matching damage lines. */
+  active: { ids: string[]; damageBonus: number; advantageOn: string[]; blocks: string[]; tags: string[] };
+  attacks: DerivedAttack[];
   life: Life;
   hpBand: HpBand;
   /** 2024 exhaustion: -2 per level to every D20 Test, -5 ft speed per level (already folded into `speed`). */
@@ -158,7 +181,24 @@ export function derive(c: Character): Derived {
     damageBonus: activeRes.reduce((n, r) => n + (r.whileActive?.damageBonus !== undefined ? evalExpr(r.whileActive.damageBonus, ctx) : 0), 0),
     advantageOn: uniq(activeRes.flatMap(r => r.whileActive?.advantageOn ?? [])),
     blocks: uniq(activeRes.flatMap(r => r.whileActive?.blocks ?? [])),
+    tags: uniq(activeRes.flatMap(r => r.whileActive?.tags ?? [])),
   };
+
+  // Attacks: to-hit and damage bonuses evaluated; `when` lines light up from active state tags.
+  const attacks: DerivedAttack[] = c.attacks.map(a => ({
+    id: a.id, name: a.name, ability: a.ability,
+    toHit: mods[a.ability] + (a.proficient ? prof : 0) + a.attackBonusExtra,
+    damage: a.damage.map(l => ({
+      dice: l.dice,
+      bonus: l.bonusExpr !== undefined ? Math.floor(evalExpr(l.bonusExpr, ctx)) : 0,
+      type: l.type,
+      when: l.when,
+      active: l.when === undefined || active.tags.includes(l.when),
+    })),
+    properties: a.properties, range: a.range, mastery: a.mastery,
+    masteryActive: a.mastery !== undefined && c.proficiencies.masteries.includes(a.mastery),
+    notes: a.notes,
+  }));
 
   // Life and HP band
   const hp = c.state.hp.current;
@@ -170,6 +210,6 @@ export function derive(c: Character): Derived {
     level, prof, mods, saves, skills,
     passive: { perception: 10 + skills.perception, insight: 10 + skills.insight, investigation: 10 + skills.investigation },
     initiative: mods.dex,
-    hpMax, ac, speed, spell, resources, hitDice, defenses, active, life, hpBand, exhaustion, ctx,
+    hpMax, ac, speed, spell, resources, hitDice, defenses, active, attacks, life, hpBand, exhaustion, ctx,
   };
 }

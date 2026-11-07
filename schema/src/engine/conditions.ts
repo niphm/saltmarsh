@@ -52,6 +52,12 @@ export function removeEffect(c: Character, id: string): Character {
   return touch(c, { ...c.state, effects: c.state.effects.filter(e => e.id !== id) }, `effect removed: ${fx.text}`);
 }
 
+/** Heroic Inspiration on/off. */
+export function setInspiration(c: Character, on: boolean): Character {
+  if (c.state.inspiration === on) return c;
+  return touch(c, { ...c.state, inspiration: on }, on ? "inspiration gained" : "inspiration used");
+}
+
 export function endConcentration(c: Character): Character {
   if (!c.state.concentration) return c;
   return touch(c, { ...c.state, concentration: null }, `concentration ended (${c.state.concentration.spell})`);

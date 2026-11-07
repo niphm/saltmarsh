@@ -7,4 +7,5 @@ export * from "./engine/rest";
 export * from "./engine/hp";
 export * from "./engine/resources";
 export * from "./engine/conditions";
+export * from "./engine/dice";
 export { LOG_LIMIT } from "./engine/log";
