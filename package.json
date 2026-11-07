@@ -1,0 +1,31 @@
+{
+  "name": "saltmarsh",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "D&D character and party tracker for the Ghosts of Saltmarsh campaign",
+  "workspaces": [
+    "schema",
+    "app"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w app",
+    "build": "npm run build -w app",
+    "preview": "npm run preview -w app",
+    "lint": "eslint .",
+    "typecheck": "npm run typecheck --workspaces",
+    "test": "npm run test --workspaces",
+    "validate": "npm run validate -w @saltmarsh/schema"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.14.0",
+    "eslint-plugin-svelte": "^3.24.1",
+    "globals": "^17.14.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.72.1"
+  }
+}

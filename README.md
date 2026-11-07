@@ -4,17 +4,21 @@ Source of truth for the new character app. Zod schemas validate at runtime, gene
 
 ## Layout
 
+The data model lives in the `schema/` workspace package (`@saltmarsh/schema`). The app is in `app/`, rules packs in `packs/`, Supabase migrations in `supabase/`.
+
 ```
-src/schema/expression.ts   tiny formula language + safe evaluator ("prof", "max(1, mod.wis)")
-src/schema/character.ts    Character document - identity, classes, resources, spells, attacks, inventory, state
-src/schema/party.ts        Party, members/roles, shared inventory, journal, encounters
-src/engine/derive.ts       pure function: Character -> every computed number on the sheet
-src/engine/rest.ts         short/long rest + initiative recharge, driven only by resource tags
-src/validate.ts            parses the examples and prints the derived sheet
-examples/                  Tidewick and Kenpachi as real documents
+schema/src/schema/expression.ts   tiny formula language + safe evaluator ("prof", "max(1, mod.wis)")
+schema/src/schema/character.ts    Character document - identity, classes, resources, spells, attacks, inventory, state
+schema/src/schema/party.ts        Party, members/roles, shared inventory, journal, encounters
+schema/src/engine/derive.ts       pure function: Character -> every computed number on the sheet
+schema/src/engine/rest.ts         short/long rest + initiative recharge, driven only by resource tags
+schema/src/engine/hp.ts           damage (temp HP first), healing (clamped), temp HP
+schema/src/validate.ts            parses the examples and prints the derived sheet
+schema/examples/                  Tidewick and Kenpachi as real documents
+schema/test/                      Vitest unit tests; the validate numbers are asserted here
 ```
 
-Run `npm install && npm run validate`.
+Run `npm install && npm run validate` from the repo root. `npm test` runs the unit tests.
 
 ## The four rules
 

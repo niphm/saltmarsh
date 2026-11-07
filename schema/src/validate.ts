@@ -1,9 +1,18 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { Character } from "./schema/character";
 import { derive } from "./engine/derive";
 import { shortRest, longRest } from "./engine/rest";
 
-for (const file of process.argv.slice(2)) {
+// With no arguments, validate every example. (Shell globs like examples/*.json
+// don't expand on Windows, so the default lives here instead of package.json.)
+const examplesDir = fileURLToPath(new URL("../examples", import.meta.url));
+const files = process.argv.length > 2
+  ? process.argv.slice(2)
+  : readdirSync(examplesDir).filter(f => f.endsWith(".json")).sort().map(f => join(examplesDir, f));
+
+for (const file of files) {
   const doc = Character.parse(JSON.parse(readFileSync(file, "utf8")));
   const d = derive(doc);
   console.log(`\n== ${doc.identity.name} (L${d.level}, prof +${d.prof}) ==`);
