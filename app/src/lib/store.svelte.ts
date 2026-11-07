@@ -87,7 +87,11 @@ export class CharacterStore {
     const next = change(prev);
     if (next === prev) return; // engine no-op: nothing to save or undo
 
-    const step: UndoStep = { state: prev.state, ...(next.inventory !== prev.inventory ? { inventory: prev.inventory } : {}) };
+    const step: UndoStep = {
+      state: prev.state,
+      ...(next.inventory !== prev.inventory ? { inventory: prev.inventory } : {}),
+      ...(next.notes !== prev.notes ? { notes: prev.notes } : {}),
+    };
     const stack = [...(this.undoStacks[id] ?? []), step].slice(-UNDO_LIMIT);
     this.#replace(id, next);
     this.undoStacks = { ...this.undoStacks, [id]: stack };
@@ -106,6 +110,7 @@ export class CharacterStore {
       ...entry.character,
       state: step.state,
       ...(step.inventory ? { inventory: step.inventory } : {}),
+      ...(step.notes !== undefined ? { notes: step.notes } : {}),
       updatedAt: nowIso(),
     };
     const rest = stack.slice(0, -1);

@@ -153,7 +153,9 @@
                       type="button"
                       class="btn text-sm"
                       onclick={() => roll.damage(`${spell.name} ${r.kind}`, r.dice, r.bonus, r.kind === "healing" ? "healing" : r.types.join("/") || undefined)}
-                      aria-label="Roll {spell.name} {r.kind}, {damageFormula(r.dice, r.bonus)}{spell.level > 0 ? ` at ${spellLevelLabel(spell.level)}` : ''}"
+                      aria-label="{damageFormula(r.dice, r.bonus)} {r.kind === 'healing' ? 'healing' : r.types.join('/') || 'damage'}: roll {spell.name} {r.kind}{spell.level > 0
+                        ? ` at ${spellLevelLabel(spell.level)}`
+                        : ''}"
                     >
                       <span class="tabular-nums">{damageFormula(r.dice, r.bonus)}</span>
                       <span class="font-normal text-ink-muted">{r.kind === "healing" ? "healing" : r.types.join("/") || "damage"}</span>

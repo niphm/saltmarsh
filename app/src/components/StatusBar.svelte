@@ -38,7 +38,7 @@
       type="button"
       onclick={goToHp}
       class="-ml-1 flex min-h-11 items-center gap-1.5 rounded-lg px-1 hover:bg-well"
-      aria-label="Hit points {c.state.hp.current} of {d.hpMax}{c.state.hp.temp ? `, plus ${c.state.hp.temp} temporary` : ''}, {hpWord}. Go to HP controls."
+      aria-label="{c.state.hp.current}/{d.hpMax}{c.state.hp.temp ? ` +${c.state.hp.temp}` : ''} {hpWord}: hit points{c.state.hp.temp ? `, ${c.state.hp.temp} temporary` : ''}. Go to HP controls."
     >
       <svg viewBox="0 0 24 24" class="size-5 {HP_BAND_TEXT[d.hpBand]}" fill="currentColor" aria-hidden="true">
         <path d="M12 21s-7.4-4.5-9.5-9.1C1.1 8.7 3.2 5 6.8 5c2 0 3.5 1.1 4.3 2.4h1.8C13.7 6.1 15.2 5 17.2 5c3.6 0 5.7 3.7 4.3 6.9C19.4 16.5 12 21 12 21Z" />

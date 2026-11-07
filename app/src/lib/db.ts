@@ -10,10 +10,11 @@ export interface SettingRow {
   value: unknown;
 }
 
-/** What undo puts back: the previous state, plus the previous inventory when the change touched it. */
+/** What undo puts back: the previous state, plus any document field the change touched. */
 export interface UndoStep {
   state: CharacterState;
   inventory?: Character["inventory"];
+  notes?: string;
 }
 
 /** Undo stack for one character, oldest first. Rows saved before inventory undo hold bare states. */

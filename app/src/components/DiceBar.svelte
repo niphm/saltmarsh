@@ -17,7 +17,7 @@
   ];
 </script>
 
-<div class="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-card pb-[env(safe-area-inset-bottom)]">
+<div role="region" aria-label="Dice roller" class="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-card pb-[env(safe-area-inset-bottom)]">
   <div class="mx-auto flex max-w-5xl items-center gap-2 px-4 py-1.5">
     <fieldset class="flex shrink-0 overflow-hidden rounded-lg border-2 border-line">
       <legend class="sr-only">Next d20 roll</legend>
@@ -35,16 +35,18 @@
       type="button"
       onclick={() => (logOpen = true)}
       class="ml-auto flex min-h-11 min-w-0 items-center justify-end gap-2 rounded-lg px-2 hover:bg-well"
-      aria-label={latest ? `Last roll, ${rollSummary(latest.roll)}. Open roll log.` : "Open roll log"}
     >
+      <!-- Visible text first, details after: the accessible name contains what's on screen (WCAG 2.5.3). -->
       {#if latest}
         {@const r = latest.roll}
         <span class="min-w-0 truncate text-sm text-ink-muted">{r.label}</span>
         {#if r.kind === "d20" && r.natural === 20}<span class="shrink-0 text-xs font-bold text-ok">NAT 20</span>{/if}
         {#if r.kind === "d20" && r.natural === 1}<span class="shrink-0 text-xs font-bold text-danger">NAT 1</span>{/if}
         <span class="shrink-0 text-2xl font-bold text-ink tabular-nums">{r.total}</span>
+        <span class="sr-only">: last roll, {rollSummary(r)}. Open roll log.</span>
       {:else}
         <span class="text-sm text-ink-muted">Tap a bonus to roll</span>
+        <span class="sr-only">. Open roll log.</span>
       {/if}
     </button>
   </div>

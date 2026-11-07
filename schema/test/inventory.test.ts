@@ -11,7 +11,18 @@ import {
   setEquipped,
   spendCharge,
 } from "../src/engine/inventory";
+import { setNotes } from "../src/engine/notes";
 import { loadExample } from "./fixtures";
+
+describe("notes (F1.14)", () => {
+  it("replaces the notes and logs once; unchanged text is a no-op", () => {
+    const t = loadExample("tidewick");
+    const r = setNotes(t, "# Session 3\n- owe Skerrin 5 gp");
+    expect(r.notes).toBe("# Session 3\n- owe Skerrin 5 gp");
+    expect(r.state.log.at(-1)?.change).toBe("notes edited");
+    expect(setNotes(r, r.notes)).toBe(r);
+  });
+});
 
 const item = (over: Partial<Item> & Pick<Item, "id" | "name" | "category">): Item => ({
   qty: 1, equipped: false, attuned: false, requiresAttunement: false, ...over,

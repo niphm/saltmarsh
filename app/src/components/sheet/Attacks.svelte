@@ -42,8 +42,8 @@
                 <button
                   type="button"
                   onclick={() => roll.damage(`${a.name} damage${line.when ? ` (${line.when})` : ""}`, line.dice, line.bonus, line.type)}
-                  aria-label="Roll {a.name} damage {damageFormula(line.dice, line.bonus)} {line.type}{situational
-                    ? `, when ${line.when}${line.active ? ', applies now' : ''}`
+                  aria-label="{damageFormula(line.dice, line.bonus)} {line.type}{situational ? ` ${titleCase(line.when ?? '')}` : ''}: roll {a.name} damage{situational
+                    ? `, only when ${line.when}${line.active ? ', applies now' : ''}`
                     : ''}"
                   class="inline-flex min-h-11 items-center gap-1.5 rounded-lg border-2 px-3 text-left hover:bg-well {!situational
                     ? 'border-line text-ink'

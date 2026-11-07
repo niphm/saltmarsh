@@ -4,7 +4,7 @@
  */
 import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it } from "vitest";
-import { addItem, applyDamage, changeCoins, derive, setEquipped, setTempHp, spendResource, type Character } from "@saltmarsh/schema";
+import { addItem, applyDamage, changeCoins, derive, setEquipped, setNotes, setTempHp, spendResource, type Character } from "@saltmarsh/schema";
 import { examples } from "@saltmarsh/schema/examples";
 import { db } from "../src/lib/db";
 import { CharacterStore, UNDO_LIMIT, docHash } from "../src/lib/store.svelte";
@@ -169,6 +169,14 @@ describe("undo (F1.12)", () => {
     expect(char(s, "c_kenpachi").inventory.coins.gp).toBe(0);
     await s.undo("c_kenpachi");
     expect(derive(char(s, "c_kenpachi")).ac).toBe(11);
+  });
+
+  it("undo puts back notes (a document field)", async () => {
+    const s = await reload();
+    await s.apply("c_tidewick", c => setNotes(c, "Owe Skerrin 5 gp"));
+    expect(char(s, "c_tidewick").notes).toBe("Owe Skerrin 5 gp");
+    await s.undo("c_tidewick");
+    expect(char(s, "c_tidewick").notes).toBe("");
   });
 
   it("undo history saved before inventory undo (bare states) still works", async () => {

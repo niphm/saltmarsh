@@ -28,12 +28,13 @@ describe("bundled examples (F1.1)", () => {
 
 describe("parseHash", () => {
   it.each([
-    ["", { name: "sheet" }],
-    ["#/", { name: "sheet" }],
+    ["", { name: "sheet", view: "sheet" }],
+    ["#/", { name: "sheet", view: "sheet" }],
     ["#/settings", { name: "settings" }],
-    ["#/c/c_kenpachi", { name: "sheet", id: "c_kenpachi" }],
-    ["#/c/a%20b", { name: "sheet", id: "a b" }],
-    ["#/nonsense", { name: "sheet" }],
+    ["#/c/c_kenpachi", { name: "sheet", id: "c_kenpachi", view: "sheet" }],
+    ["#/c/c_kenpachi/notes", { name: "sheet", id: "c_kenpachi", view: "notes" }],
+    ["#/c/a%20b", { name: "sheet", id: "a b", view: "sheet" }],
+    ["#/nonsense", { name: "sheet", view: "sheet" }],
   ])("%s", (hash, route) => {
     expect(parseHash(hash)).toEqual(route);
   });

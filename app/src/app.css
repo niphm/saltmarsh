@@ -50,6 +50,55 @@
   .field {
     @apply h-11 min-w-0 rounded-lg border-2 border-line bg-well px-3 text-ink placeholder:text-ink-muted;
   }
+
+  /* Rendered markdown (notes). Preflight strips element styles, so restore the basics with theme tokens. */
+  .prose-notes {
+    @apply text-ink leading-relaxed break-words;
+  }
+  .prose-notes > * + * {
+    @apply mt-3;
+  }
+  .prose-notes h1 {
+    @apply font-display text-2xl font-semibold;
+  }
+  .prose-notes h2 {
+    @apply font-display text-xl font-semibold;
+  }
+  .prose-notes h3,
+  .prose-notes h4 {
+    @apply text-lg font-semibold;
+  }
+  .prose-notes ul {
+    @apply list-disc pl-6;
+  }
+  .prose-notes ol {
+    @apply list-decimal pl-6;
+  }
+  .prose-notes li + li {
+    @apply mt-1;
+  }
+  .prose-notes a {
+    @apply text-accent underline;
+  }
+  .prose-notes code {
+    @apply rounded bg-well px-1 font-mono text-sm;
+  }
+  .prose-notes pre {
+    @apply overflow-x-auto rounded-lg bg-well p-3;
+  }
+  .prose-notes blockquote {
+    @apply border-l-4 border-line pl-3 text-ink-muted;
+  }
+  .prose-notes hr {
+    @apply border-line;
+  }
+  .prose-notes table {
+    @apply w-full text-sm;
+  }
+  .prose-notes th,
+  .prose-notes td {
+    @apply border border-line px-2 py-1 text-left;
+  }
 }
 
 @layer base {
@@ -65,7 +114,8 @@
   }
 
   :focus-visible {
-    outline: 3px solid var(--focus);
+    /* --focus-width: optional per-theme token (High Contrast uses 4px). */
+    outline: var(--focus-width, 3px) solid var(--focus);
     outline-offset: 2px;
     border-radius: 6px;
   }

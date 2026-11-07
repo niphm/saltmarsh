@@ -11,4 +11,5 @@ export * from "./engine/conditions";
 export * from "./engine/dice";
 export * from "./engine/spells";
 export * from "./engine/inventory";
+export * from "./engine/notes";
 export { LOG_LIMIT } from "./engine/log";

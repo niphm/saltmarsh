@@ -11,7 +11,12 @@ import.meta.glob("./themes/*.css", { eager: true });
 
 theme.init();
 router.init();
-void characters.init();
 registerSW({ immediate: true });
+
+// Load saved characters before the first render so the sheet (and its sticky
+// status bar) appears in one go instead of shifting in after a loading state.
+// If IndexedDB stalls, render anyway; the store fills in when it's ready.
+const loaded = characters.init();
+await Promise.race([loaded, new Promise(resolve => setTimeout(resolve, 1500))]);
 
 mount(App, { target: document.getElementById("app")! });

@@ -3,7 +3,7 @@ import { parseHash, type Route } from "./routes";
 export { href, type Route } from "./routes";
 
 class Router {
-  route = $state<Route>({ name: "sheet" });
+  route = $state<Route>({ name: "sheet", view: "sheet" });
 
   init() {
     const sync = () => (this.route = parseHash(location.hash));

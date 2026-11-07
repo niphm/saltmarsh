@@ -14,7 +14,7 @@
         <button
           type="button"
           onclick={() => roll.d20(`${ABILITY_NAME[a]} check`, d.mods[a])}
-          aria-label="{ABILITY_NAME[a]} {c.abilityScores[a]}, modifier {signed(d.mods[a])}. Roll a {ABILITY_NAME[a]} check."
+          aria-label="{abilityAbbr(a)} {signed(d.mods[a])} {c.abilityScores[a]}: {ABILITY_NAME[a]} score {c.abilityScores[a]}, modifier {signed(d.mods[a])}. Roll {ABILITY_NAME[a]} check."
           class="flex w-full flex-col items-center rounded-xl border border-line bg-card px-2 pt-2 pb-3 hover:bg-well"
         >
           <span class="text-xs font-semibold tracking-widest text-accent" aria-hidden="true">{abilityAbbr(a)}</span>

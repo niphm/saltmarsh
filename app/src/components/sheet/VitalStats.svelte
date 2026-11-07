@@ -25,7 +25,7 @@
         <button
           type="button"
           onclick={() => roll.d20("Initiative", d.initiative)}
-          aria-label="Initiative {signed(d.initiative)}. Roll initiative."
+          aria-label="Init {signed(d.initiative)}: roll initiative"
           class="flex flex-1 flex-col rounded-xl border border-line bg-card p-3 text-left hover:bg-well"
         >
           <span class="text-xs font-semibold tracking-wider text-ink-muted uppercase" aria-hidden="true">Init</span>
