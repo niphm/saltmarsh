@@ -1,0 +1,22 @@
+/*
+ * Saltmarsh (default) - deep navy and brass.
+ * `:where(:root)` has zero specificity, so these are also the fallback
+ * values when no (or an unknown) data-theme is set.
+ */
+:where(:root),
+[data-theme="saltmarsh"] {
+  color-scheme: dark;
+  --page: #0b1626;
+  --card: #12233a;
+  --well: #1a3050;
+  --line: #2a4366;
+  --ink: #eef2f7;
+  --ink-muted: #b4c2d4;
+  --accent: #e0b65c;
+  --on-accent: #1a1206;
+  --focus: #f5cf7a;
+  --danger: #ff9b8f;
+  --warn: #ffd27a;
+  --ok: #8fe0ad;
+  --info: #9ccbff;
+}

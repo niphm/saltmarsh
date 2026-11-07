@@ -1,0 +1,17 @@
+/* Parchment - light, warm paper and ink. */
+[data-theme="parchment"] {
+  color-scheme: light;
+  --page: #f3ead5;
+  --card: #fbf7ec;
+  --well: #ebdfc2;
+  --line: #c9b38a;
+  --ink: #2a1f14;
+  --ink-muted: #5a4733;
+  --accent: #7a4510;
+  --on-accent: #fbf7ec;
+  --focus: #9a3412;
+  --danger: #a1231c;
+  --warn: #7c5200;
+  --ok: #2b6535;
+  --info: #1d4f86;
+}

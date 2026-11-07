@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="D&amp;D character and party tracker for the Ghosts of Saltmarsh campaign" />
+    <meta name="theme-color" content="#0b1626" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/favicon.svg" sizes="any" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
+    <title>Saltmarsh</title>
+    <script>
+      // Apply the saved theme before first paint so there's no flash.
+      // Before the user has chosen, prefers-color-scheme picks the initial theme
+      // (src/lib/theme.svelte.ts owns the real logic and validates the value).
+      (function () {
+        var t = null;
+        try { t = localStorage.getItem("saltmarsh.theme"); } catch (e) {}
+        if (!t && window.matchMedia && matchMedia("(prefers-color-scheme: light)").matches) t = "parchment";
+        document.documentElement.setAttribute("data-theme", t || "saltmarsh");
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
