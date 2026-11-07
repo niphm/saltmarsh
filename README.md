@@ -16,6 +16,10 @@ schema/src/engine/hp.ts           damage (temp HP first, death saves at 0), heal
 schema/src/engine/resources.ts    spend/regain resources and spell slots, `state` resources on/off
 schema/src/engine/conditions.ts   conditions, exhaustion, free-text effects, concentration, inspiration
 schema/src/engine/dice.ts         d20 tests (advantage, exhaustion penalty), damage rolls, per-die rerolls
+schema/src/engine/spells.ts       casting (slots, free casts, concentration), spell dice by slot/character level
+schema/src/schema/pack.ts         rules pack shapes: Spell, PackMeta
+packs/srd/                        SRD 5.2 (CC-BY 4.0): pack.json + spells.json (339 spells, `npm run packs:srd`)
+packs/saltmarsh/                  table pack: non-SRD entries the party uses (summaries, not book text)
 schema/src/validate.ts            parses the examples and prints the derived sheet
 schema/examples/                  Tidewick and Kenpachi as real documents
 schema/test/                      Vitest unit tests; the validate numbers are asserted here

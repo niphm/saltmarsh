@@ -8,7 +8,7 @@ import type { Character } from "../schema/character";
 import type { Spell } from "../schema/pack";
 import { derive, type Derived } from "./derive";
 import { parseDice } from "./dice";
-import { stamp } from "./log";
+import { refLabel, stamp } from "./log";
 
 export type CastableSpell = Pick<Spell, "id" | "name" | "level" | "concentration">;
 
@@ -68,7 +68,7 @@ export function castSpell(c: Character, spell: CastableSpell, opts: CastOptions 
 
   if (spell.concentration) {
     const prev = state.concentration?.spell;
-    if (prev && prev !== spell.id) notes.push(`ended concentration on ${prev}`);
+    if (prev && prev !== spell.id) notes.push(`ended concentration on ${refLabel(prev)}`);
     state = { ...state, concentration: { spell: spell.id } };
   }
 

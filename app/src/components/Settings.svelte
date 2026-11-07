@@ -2,6 +2,7 @@
   import { THEMES } from "../themes";
   import { theme } from "../lib/theme.svelte";
   import { characters } from "../lib/store.svelte";
+  import { PACKS } from "../lib/packs";
   import Dialog from "./Dialog.svelte";
 
   let confirmReset = $state(false);
@@ -62,6 +63,29 @@
     Characters and table state (HP, resources, conditions, undo history) are saved in this browser and work offline.
   </p>
   <button type="button" class="btn btn-danger mt-3" onclick={() => (confirmReset = true)}>Reset to bundled characters</button>
+</section>
+
+<section aria-labelledby="about-heading" class="mt-4 rounded-xl border border-line bg-card p-4">
+  <h2 id="about-heading" class="font-display text-sm font-semibold tracking-widest text-accent uppercase">About</h2>
+  <p class="mt-1 text-sm text-ink">
+    Saltmarsh is a character and party tracker for the Ghosts of Saltmarsh campaign. Rules content comes from these packs:
+  </p>
+  <ul class="mt-3 space-y-3">
+    {#each PACKS as { meta } (meta.id)}
+      <li class="rounded-lg bg-well p-3 text-sm">
+        <p class="font-semibold text-ink">
+          {meta.name}
+          <span class="font-normal text-ink-muted">· {meta.homebrew ? "table pack" : meta.license}</span>
+        </p>
+        <p class="mt-1 text-ink">{meta.attribution}</p>
+        {#if meta.source}
+          <a href={meta.source} target="_blank" rel="noopener noreferrer" class="mt-1 inline-flex min-h-11 items-center text-accent underline">
+            {meta.source}
+          </a>
+        {/if}
+      </li>
+    {/each}
+  </ul>
 </section>
 
 <Dialog bind:open={confirmReset} title="Reset local data?">

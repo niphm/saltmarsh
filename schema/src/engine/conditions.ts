@@ -3,7 +3,7 @@
  * No-ops return the same object.
  */
 import type { Character, Condition } from "../schema/character";
-import { stamp } from "./log";
+import { refLabel, stamp } from "./log";
 
 const touch = (c: Character, state: Character["state"], change: string): Character => ({
   ...c,
@@ -60,5 +60,5 @@ export function setInspiration(c: Character, on: boolean): Character {
 
 export function endConcentration(c: Character): Character {
   if (!c.state.concentration) return c;
-  return touch(c, { ...c.state, concentration: null }, `concentration ended (${c.state.concentration.spell})`);
+  return touch(c, { ...c.state, concentration: null }, `concentration ended (${refLabel(c.state.concentration.spell)})`);
 }

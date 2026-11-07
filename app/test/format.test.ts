@@ -11,8 +11,29 @@ import {
   rollSummary,
   signed,
   skillName,
+  spellComponents,
+  spellDuration,
+  spellLevelHeading,
+  spellLevelLabel,
   titleCase,
 } from "../src/lib/format";
+
+describe("spell formatting", () => {
+  it("levels", () => {
+    expect([0, 1, 3].map(spellLevelLabel)).toEqual(["Cantrip", "1st level", "3rd level"]);
+    expect(spellLevelHeading(0)).toBe("Cantrips");
+  });
+
+  it("components", () => {
+    expect(spellComponents({ verbal: false, somatic: true, material: "a pinch of confetti" })).toBe("S, M (a pinch of confetti)");
+    expect(spellComponents({ verbal: true, somatic: false })).toBe("V");
+  });
+
+  it("duration with concentration", () => {
+    expect(spellDuration({ duration: "1 minute", concentration: true })).toBe("Concentration, up to 1 minute");
+    expect(spellDuration({ duration: "Instantaneous", concentration: false })).toBe("Instantaneous");
+  });
+});
 
 describe("roll formatting", () => {
   it("damageFormula", () => {

@@ -27,7 +27,7 @@ describe("acceptance: casting and concentration (REQUIREMENTS 7)", () => {
     const r = castSpell(castSpell(t, HP), FOG);
     expect(r.state.concentration).toEqual({ spell: "srd:spell:fog-cloud" });
     expect(derive(r).spell?.slotsRemaining).toEqual([3, 3, 1]);
-    expect(r.state.log.at(-1)?.change).toBe("cast Fog Cloud (level 1 slot; ended concentration on srd:spell:hypnotic-pattern)");
+    expect(r.state.log.at(-1)?.change).toBe("cast Fog Cloud (level 1 slot; ended concentration on hypnotic pattern)");
   });
 });
 

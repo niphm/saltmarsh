@@ -2,7 +2,7 @@
  * Display formatting only. No rules math lives here - every number comes
  * from derive(); these helpers just turn values and ids into text.
  */
-import type { Ability, Character, HpBand, Life, Resource, Roll, RollMode, Skill } from "@saltmarsh/schema";
+import type { Ability, Character, HpBand, Life, Resource, Roll, RollMode, Skill, Spell } from "@saltmarsh/schema";
 
 export type ProfLevel = NonNullable<Character["proficiencies"]["skills"][Skill]>;
 
@@ -77,6 +77,20 @@ export function rollSummary(roll: Roll): string {
   const type = roll.kind === "damage" && roll.type ? ` ${roll.type}` : "";
   return `${roll.label}${mode}: ${roll.total}${type}${nat}`;
 }
+
+/** "Cantrip", "1st level", "3rd level". */
+export const spellLevelLabel = (level: number) => (level === 0 ? "Cantrip" : `${ordinal(level)} level`);
+
+/** Group heading: "Cantrips", "1st level". */
+export const spellLevelHeading = (level: number) => (level === 0 ? "Cantrips" : `${ordinal(level)} level`);
+
+/** "V, S, M (a pinch of confetti)" */
+export const spellComponents = (c: Spell["components"]) =>
+  [c.verbal && "V", c.somatic && "S", c.material !== undefined && `M (${c.material})`].filter(Boolean).join(", ");
+
+/** "Concentration, up to 1 minute" or "Instantaneous". */
+export const spellDuration = (s: Pick<Spell, "duration" | "concentration">) =>
+  s.concentration ? `Concentration, up to ${s.duration.charAt(0).toLowerCase()}${s.duration.slice(1)}` : s.duration;
 
 /** "Sorcerer 5 (Divine Soul)" - joined with " / " for multiclass. */
 export const classLine = (classes: Character["classes"]) =>

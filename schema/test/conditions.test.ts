@@ -61,7 +61,7 @@ describe("effects and concentration", () => {
     const c = withState(t, { concentration: { spell: "srd:spell:hypnotic-pattern" } });
     const r = endConcentration(c);
     expect(r.state.concentration).toBeNull();
-    expect(r.state.log.at(-1)?.change).toBe("concentration ended (srd:spell:hypnotic-pattern)");
+    expect(r.state.log.at(-1)?.change).toBe("concentration ended (hypnotic pattern)");
     expect(endConcentration(t)).toBe(t);
   });
 });

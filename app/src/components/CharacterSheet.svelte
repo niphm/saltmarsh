@@ -11,6 +11,7 @@
   import Attacks from "./sheet/Attacks.svelte";
   import Resources from "./sheet/Resources.svelte";
   import Spellcasting from "./sheet/Spellcasting.svelte";
+  import Spells from "./sheet/Spells.svelte";
   import Conditions from "./sheet/Conditions.svelte";
   import SavingThrows from "./sheet/SavingThrows.svelte";
   import Senses from "./sheet/Senses.svelte";
@@ -44,6 +45,9 @@
   <Resources {d} {act} />
   {#if d.spell}
     <Spellcasting spell={d.spell} {act} {roll} />
+  {/if}
+  {#if character.spellcasting?.spells.length}
+    <div class="md:col-span-2"><Spells c={character} {d} {act} {roll} /></div>
   {/if}
   <Conditions c={character} {d} {act} />
   <SavingThrows c={character} {d} {roll} />
