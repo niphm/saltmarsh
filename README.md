@@ -63,17 +63,23 @@ Characters reference content by `pack:kind:slug` (`srd:spell:fireball`, `saltmar
 
 A `Party` holds members with `role: player | dm`, the shared inventory, visibility settings, and the enabled packs. `JournalEntry` is party-scoped with `visibility: party | dm | author`. `Encounter` is the DM's initiative tracker; PC combatants link to live character state, monsters carry their own HP.
 
-## Supabase shape (v2)
+## Supabase shape (Phase 2)
+
+All DDL and RLS live in `supabase/migrations/`; `supabase/tests/rls.test.ts` checks every rule through the real API.
 
 ```
-characters   id, owner_id, party_id, doc jsonb, state jsonb, updated_at
-parties      id, dm_user_id, doc jsonb
-party_members party_id, user_id, role
-journal      id, party_id, author_id, visibility, doc jsonb
-encounters   id, party_id, doc jsonb
+profiles          id (auth user), display_name
+parties           id, dm_user_id, name, invite_code, visibility, rules_packs, calendar, coins
+party_members     party_id, user_id, role (player | dm)
+characters        id, owner_id, party_id, doc jsonb, doc_edited_at, doc_version
+character_states  character_id, party_id, state jsonb, summary jsonb, state_edited_at, state_version
+party_items       id, party_id, name, qty, category, held_by (character), notes
+journal           id, party_id, author_id, visibility (party | dm | author), kind, doc jsonb
 ```
 
-Split `state` into its own column so Realtime subscriptions on the party board only fire on table-state changes, not on backstory edits. RLS: owner can write `doc`; owner and party DM can write `state`; party members can read `state` subject to `visibility`.
+A character is two rows: the document and the table state. RLS: the owner writes `doc`; the owner and the party DM write `state`; party members read `state` and `summary` (name, max HP, HP band, AC, from `derive()`) but never each other's documents, which hold private notes. Realtime is on `character_states`, so the party board only hears table-state changes. Encounters arrive with Phase 3.
+
+Sync is local-first (F2.2): the app writes to IndexedDB, then uploads with a compare-and-set on `*_version`. On a collision the newer `*_edited_at` wins for that row and the state log keeps both sides. Shared coins change only through `adjust_party_coins()`; joining is `join_party(code)`.
 
 ## Open items found while modeling the party
 

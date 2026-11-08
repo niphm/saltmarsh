@@ -34,6 +34,12 @@ describe("parseHash", () => {
     ["#/c/c_kenpachi", { name: "sheet", id: "c_kenpachi", view: "sheet" }],
     ["#/c/c_kenpachi/notes", { name: "sheet", id: "c_kenpachi", view: "notes" }],
     ["#/c/a%20b", { name: "sheet", id: "a b", view: "sheet" }],
+    ["#/party", { name: "party", tab: "members" }],
+    ["#/party/inventory", { name: "party", tab: "inventory" }],
+    ["#/party/journal/", { name: "party", tab: "journal" }],
+    ["#/party/nope", { name: "sheet", view: "sheet" }],
+    // A password-reset link's token hash shouldn't break routing.
+    ["#access_token=abc&type=recovery", { name: "sheet", view: "sheet" }],
     ["#/nonsense", { name: "sheet", view: "sheet" }],
   ])("%s", (hash, route) => {
     expect(parseHash(hash)).toEqual(route);
