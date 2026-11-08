@@ -66,7 +66,7 @@ Root scripts: `npm run dev`, `npm run lint`, `npm run typecheck`, `npm test`, `n
 - Contrast: `app/test/themes.test.ts` (AA for every theme, AAA for High Contrast, status colors distinct).
 - axe: `npm run build`, copy `node_modules/axe-core/axe.min.js` into `app/dist/`, serve the build, load `/saltmarsh/axe.min.js` in the page and `axe.run()` on each screen and open dialog. Target: zero violations.
 - Lighthouse (mobile, simulated slow 4G): `npx lighthouse@13 http://localhost:4173/saltmarsh/ --form-factor=mobile`. Lighthouse 12+ has no PWA category; `npx lighthouse@11.7.1 ... --only-categories=pwa` checks installability.
-- Last run (2026-11-07): axe 0 violations on all screens/dialogs and all six themes; Lighthouse 99/100/100/100, FCP 1.6 s, LCP 1.6 s, CLS 0; PWA (v11) 100.
+- Last run (2026-11-08, Phase 2): axe 0 violations on every screen and dialog, including account, party, inventory and journal (run against the dev build; injecting axe from a CDN into the live page is blocked). Lighthouse on the live site 100/100/100/100, FCP 1.5 s, LCP 1.5 s, CLS 0, TBT 0 ms. PWA (v11) 100 as of 2026-11-07.
 - Never put deep `$state` objects into the store or IndexedDB (DataCloneError on proxies): use `$state.raw` or `$state.snapshot`.
 
 ## Never without telling the user first
