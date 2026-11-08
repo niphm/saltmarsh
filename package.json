@@ -16,7 +16,10 @@
     "typecheck": "npm run typecheck --workspaces",
     "test": "npm run test --workspaces",
     "validate": "npm run validate -w @saltmarsh/schema",
-    "packs:srd": "node packs/scripts/build-srd-spells.mjs"
+    "packs:srd": "node packs/scripts/build-srd-spells.mjs",
+    "db:start": "supabase start -x studio,imgproxy,storage-api,edge-runtime,logflare,vector,supavisor,postgres-meta",
+    "db:reset": "supabase db reset",
+    "test:db": "vitest run --root supabase"
   },
   "engines": {
     "node": ">=22"
@@ -26,6 +29,7 @@
     "eslint": "^10.14.0",
     "eslint-plugin-svelte": "^3.24.1",
     "globals": "^17.14.0",
+    "supabase": "^3.0.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.72.1"
   }

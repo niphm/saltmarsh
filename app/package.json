@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@saltmarsh/schema": "*",
+    "@supabase/supabase-js": "^2.119.0",
     "dexie": "^4.4.7",
     "dompurify": "^3.4.17",
     "marked": "^18.1.3"
