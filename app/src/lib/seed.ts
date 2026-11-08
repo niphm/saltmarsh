@@ -2,7 +2,7 @@
  * Pure merge of bundled examples with what's saved in IndexedDB. No I/O here;
  * the store reads/writes and calls this.
  */
-import type { Character } from "@saltmarsh/schema";
+import { migrateCharacter, type Character } from "@saltmarsh/schema";
 import { loadCharacter, type LoadResult } from "./characters";
 import type { SettingRow } from "./db";
 
@@ -27,20 +27,60 @@ export interface SeedPlan {
   /** Characters to (re)write to IndexedDB. */
   writes: Character[];
   seedWrites: SettingRow[];
+  /**
+   * Saved characters that were on an older schema version and have been
+   * upgraded (and are in `writes`). Their undo history holds old-shape
+   * states, so the store drops it.
+   */
+  upgraded: string[];
 }
 
 /**
+ * The example's new document, keeping what the player changes in the app:
+ * table state, notes, and each item's quantity and attunement, plus items
+ * they added. An item removed from the example stays if the saved copy has it.
+ */
+export function refreshExample(fresh: Character, saved: Character): Character {
+  const savedItems = new Map(saved.inventory.items.map(i => [i.id, i]));
+  const freshIds = new Set(fresh.inventory.items.map(i => i.id));
+  const items = [
+    ...fresh.inventory.items.map(i => {
+      const s = savedItems.get(i.id);
+      return s ? { ...i, qty: s.qty, attuned: s.attuned } : i;
+    }),
+    ...saved.inventory.items.filter(i => !freshIds.has(i.id)),
+  ];
+  return { ...fresh, inventory: { ...fresh.inventory, items }, notes: saved.notes, state: saved.state };
+}
+
+/**
+ * Saved copies are first upgraded to the current schema version (written
+ * back, listed in `upgraded`). Then:
  * - Example never saved: seed it.
  * - Saved and the example's document is unchanged: use the saved copy.
- * - Saved but the example's document changed in the repo: new document, saved table state (doc vs state, F2.2).
- * - Saved copy no longer validates: reseed from the example.
+ * - Saved but the example's document changed in the repo: the new document
+ *   with the player's state, notes and inventory edits kept (refreshExample).
+ * - Saved copy no longer validates: reseed from the example (keeping its table state if that still fits).
  * - Saved copy was imported over the example (seed = SEED_LOCAL): always use the saved copy.
  * - Saved characters that aren't examples are kept, after the examples.
  */
-export function planSeed(bundled: readonly unknown[], stored: readonly Character[], seeds: readonly SettingRow[]): SeedPlan {
-  const storedById = new Map(stored.map(c => [c.id, c]));
+export function planSeed(bundled: readonly unknown[], stored: readonly unknown[], seeds: readonly SettingRow[]): SeedPlan {
+  const plan: SeedPlan = { entries: [], writes: [], seedWrites: [], upgraded: [] };
+  const storedById = new Map<string, unknown>();
+  for (const raw of stored) {
+    const id = (raw as { id?: unknown } | null)?.id;
+    if (typeof id !== "string") continue;
+    const doc = migrateCharacter(raw);
+    if (doc !== raw) plan.upgraded.push(id);
+    storedById.set(id, doc);
+  }
   const seedById = new Map(seeds.map(r => [r.key, r.value]));
-  const plan: SeedPlan = { entries: [], writes: [], seedWrites: [] };
+
+  /** A saved copy used as is; written back if it was just upgraded. */
+  const keep = (r: LoadResult): LoadResult => {
+    if (r.ok && plan.upgraded.includes(r.id)) plan.writes.push(r.character);
+    return r;
+  };
 
   bundled.forEach((raw, i) => {
     const fresh = loadCharacter(raw, `example-${i + 1}`);
@@ -55,22 +95,25 @@ export function planSeed(bundled: readonly unknown[], stored: readonly Character
 
     if (saved && seedById.get(seedKey) === SEED_LOCAL) {
       // Imported over the example: keep it as is, even if it no longer validates (show the error, don't overwrite).
-      plan.entries.push(loadCharacter(saved, fresh.id));
+      plan.entries.push(keep(loadCharacter(saved, fresh.id)));
       return;
     }
 
-    if (saved && seedById.get(seedKey) === hash) {
-      const parsed = loadCharacter(saved, fresh.id);
+    const parsed = saved ? loadCharacter(saved, fresh.id) : undefined;
+    if (parsed && seedById.get(seedKey) === hash) {
       if (parsed.ok) {
-        plan.entries.push(parsed);
+        plan.entries.push(keep(parsed));
         return;
       }
       console.warn(`Saved copy of ${fresh.id} no longer validates; reseeding`, parsed.issues);
     }
 
     let next: LoadResult = fresh;
-    if (saved) {
-      const merged = loadCharacter({ ...fresh.character, state: saved.state }, fresh.id);
+    if (parsed?.ok) {
+      const merged = loadCharacter(refreshExample(fresh.character, parsed.character), fresh.id);
+      if (merged.ok) next = merged;
+    } else if (saved) {
+      const merged = loadCharacter({ ...fresh.character, state: (saved as { state?: unknown }).state }, fresh.id);
       if (merged.ok) next = merged;
     }
     plan.entries.push(next);
@@ -78,6 +121,6 @@ export function planSeed(bundled: readonly unknown[], stored: readonly Character
     plan.seedWrites.push({ key: seedKey, value: hash });
   });
 
-  for (const saved of storedById.values()) plan.entries.push(loadCharacter(saved, saved.id));
+  for (const [id, saved] of storedById) plan.entries.push(keep(loadCharacter(saved, id)));
   return plan;
 }

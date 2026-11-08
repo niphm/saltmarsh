@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "id": "c_tidewick",
   "ownerId": "u_david",
   "partyId": "p_saltmarsh",
@@ -80,10 +80,9 @@
       "properties": ["finesse", "light", "thrown (20/60)"], "mastery": "nick" }
   ],
   "inventory": {
-    "coins": { "gp": 0 },
     "items": [
-      { "id": "i-dagger", "name": "Dagger", "category": "weapon", "qty": 1, "equipped": true, "weight": 1 },
-      { "id": "i-focus", "name": "Arcane Focus (crystal)", "category": "gear", "qty": 1, "equipped": true }
+      { "id": "i-dagger", "name": "Dagger", "category": "weapon", "qty": 1, "weight": 1 },
+      { "id": "i-focus", "name": "Arcane Focus (crystal)", "category": "gear", "qty": 1 }
     ]
   },
   "hpMax": 34,
@@ -99,6 +98,9 @@
     "conditions": [],
     "effects": [],
     "inspiration": false,
+    "coins": { "gp": 0 },
+    "equipped": ["i-dagger", "i-focus"],
+    "chargesSpent": {},
     "log": []
   },
   "createdAt": "2026-11-07T17:00:00Z",

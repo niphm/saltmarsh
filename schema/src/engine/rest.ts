@@ -1,13 +1,24 @@
 /**
- * Rest engine. Walks the resource list and recharges by `recharge` tag.
- * The UI's "Short Rest" and "Long Rest" buttons call these and nothing else -
- * no character-specific code anywhere.
+ * Rest engine. Walks the resource list (and item charges) and recharges by
+ * `recharge` tag. The UI's "Short Rest" and "Long Rest" buttons call these
+ * and nothing else - no character-specific code anywhere.
  */
-import type { Character } from "../schema/character";
+import type { Character, Recharge } from "../schema/character";
 import { evalExpr } from "../schema/expression";
 import { derive } from "./derive";
 import { wholeAmount } from "./hp";
 import { stamp } from "./log";
+
+/**
+ * Item charges after a recharge event: items whose `recharge` matches
+ * `refills` come back in full (like resources without a `rechargeAmount`);
+ * the rest keep their spent charges.
+ */
+function rechargeItems(c: Character, refills: (r: Recharge) => boolean): Record<string, number> {
+  const chargesSpent = { ...c.state.chargesSpent };
+  for (const i of c.inventory.items) if (i.charges && refills(i.charges.recharge)) delete chargesSpent[i.id];
+  return chargesSpent;
+}
 
 export interface ShortRestOptions {
   /** Hit dice to spend. Clamped to the hit dice remaining. */
@@ -62,7 +73,11 @@ export function shortRest(c: Character, opts: ShortRestOptions = {}): Character 
 
   return {
     ...c,
-    state: { ...c.state, hp, deathSaves, spent, hitDiceSpent, log: stamp(c, `short rest${notes.length ? ` (${notes.join(", ")})` : ""}`) },
+    state: {
+      ...c.state, hp, deathSaves, spent, hitDiceSpent,
+      chargesSpent: rechargeItems(c, r => r === "short"),
+      log: stamp(c, `short rest${notes.length ? ` (${notes.join(", ")})` : ""}`),
+    },
     updatedAt: new Date().toISOString(),
   };
 }
@@ -83,6 +98,7 @@ export function longRest(c: Character): Character {
       ...c.state,
       hp: { ...c.state.hp, current: d.hpMax, temp: 0 },
       spent,
+      chargesSpent: rechargeItems(c, r => r !== "manual"),
       active: [],
       slotsSpent: {},
       hitDiceSpent,
@@ -102,5 +118,6 @@ export function longRest(c: Character): Character {
 export function onInitiative(c: Character): Character {
   const spent = { ...c.state.spent };
   for (const r of c.resources) if (r.recharge === "initiative") delete spent[r.id];
-  return { ...c, state: { ...c.state, spent, log: stamp(c, "initiative rolled") } };
+  const chargesSpent = rechargeItems(c, r => r === "initiative");
+  return { ...c, state: { ...c.state, spent, chargesSpent, log: stamp(c, "initiative rolled") } };
 }

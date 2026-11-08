@@ -90,6 +90,8 @@ export interface Derived {
     weight: number;
     attuned: number;
     attunementLimit: number;
+    /** Ids of equipped items that are in the inventory. */
+    equipped: string[];
     /** Item charges with `max` evaluated, keyed by item id. */
     charges: Record<string, { current: number; max: number }>;
   };
@@ -150,16 +152,17 @@ export function derive(c: Character): Derived {
   const hpMax = c.state.hp.maxOverride ?? c.hpMax ?? c.hpByLevel!.reduce((n, h) => n + h + mods.con, 0);
 
   // AC: armor base + capped dex + shields/bonuses; else 10 + dex (+ unarmored defense via resource)
+  const equippedItems = c.inventory.items.filter(i => c.state.equipped.includes(i.id));
   let ac: number;
   if (c.state.acOverride !== undefined) {
     ac = c.state.acOverride;
   } else {
-    const equipped = c.inventory.items.filter(i => i.equipped && i.equipEffect);
-    const armor = equipped.find(i => i.equipEffect!.acBase !== undefined);
+    const worn = equippedItems.filter(i => i.equipEffect);
+    const armor = worn.find(i => i.equipEffect!.acBase !== undefined);
     const dexCap = armor?.equipEffect!.acDexCap;
     const dexPart = dexCap === null || dexCap === undefined ? mods.dex : Math.min(mods.dex, dexCap);
     ac = (armor?.equipEffect!.acBase ?? 10) + dexPart
-       + equipped.reduce((n, i) => n + (i.equipEffect!.acBonus ?? 0), 0);
+       + worn.reduce((n, i) => n + (i.equipEffect!.acBonus ?? 0), 0);
   }
   // Active state resources (Large Form etc.) can add
   const activeRes = c.resources.filter(r => c.state.active.includes(r.id));
@@ -233,13 +236,16 @@ export function derive(c: Character): Derived {
     initiative: mods.dex,
     hpMax, ac, speed, spell, resources, hitDice, defenses, active, attacks, life, hpBand, exhaustion,
     inventory: {
-      gp: coinsInGp(c.inventory.coins),
+      gp: coinsInGp(c.state.coins),
       weight: Math.round(c.inventory.items.reduce((n, i) => n + i.qty * (i.weight ?? 0), 0) * 10) / 10,
       attuned: c.inventory.items.filter(i => i.attuned).length,
       attunementLimit: ATTUNEMENT_LIMIT,
-      charges: Object.fromEntries(c.inventory.items.flatMap(i => i.charges
-        ? [[i.id, { current: i.charges.current, max: Math.max(0, Math.floor(evalExpr(i.charges.max, ctx))) }]]
-        : [])),
+      equipped: equippedItems.map(i => i.id),
+      charges: Object.fromEntries(c.inventory.items.flatMap(i => {
+        if (!i.charges) return [];
+        const max = Math.max(0, Math.floor(evalExpr(i.charges.max, ctx)));
+        return [[i.id, { current: max - Math.min(max, c.state.chargesSpent[i.id] ?? 0), max }]];
+      })),
     },
     ctx,
   };

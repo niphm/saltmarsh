@@ -1,13 +1,13 @@
-import { Character } from "@saltmarsh/schema";
+import { Character, migrateCharacter } from "@saltmarsh/schema";
 import { examples } from "@saltmarsh/schema/examples";
 
 export type LoadResult =
   | { ok: true; id: string; name: string; character: Character }
   | { ok: false; id: string; name: string; issues: string[] };
 
-/** Validate a raw document with the Zod schema. Never throws. */
+/** Upgrade a raw document to the current schema version, then validate it with Zod. Never throws. */
 export function loadCharacter(raw: unknown, fallbackId: string): LoadResult {
-  const parsed = Character.safeParse(raw);
+  const parsed = Character.safeParse(migrateCharacter(raw));
   if (parsed.success) {
     return { ok: true, id: parsed.data.id, name: parsed.data.identity.name, character: parsed.data };
   }

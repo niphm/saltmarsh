@@ -1,21 +1,22 @@
 /**
  * Inventory changes (F1.7): coins, equipping, attunement, quantity, charges,
- * adding/removing items. Inventory lives in the document, not `state`, so
- * these touch `c.inventory` (and log to state.log like every other change).
- * No-ops return the same object.
+ * adding/removing items. Coins, what's equipped and charges used are table
+ * state (`c.state`); item definitions, quantity and attunement are in the
+ * document (`c.inventory`). Every change logs to state.log. No-ops return
+ * the same object.
  */
-import type { Character, Item } from "../schema/character";
+import type { Character, CharacterState, Item } from "../schema/character";
 import { ATTUNEMENT_LIMIT, COIN_CP, derive, type Coin } from "./derive";
 import { stamp } from "./log";
 
 export const COINS = Object.keys(COIN_CP) as Coin[];
 
-function withInventory(c: Character, inventory: Character["inventory"], change: string): Character {
-  return { ...c, inventory, state: { ...c.state, log: stamp(c, change) }, updatedAt: new Date().toISOString() };
+function withState(c: Character, state: Partial<CharacterState>, change: string): Character {
+  return { ...c, state: { ...c.state, ...state, log: stamp(c, change) }, updatedAt: new Date().toISOString() };
 }
 
-function withItems(c: Character, items: Item[], change: string): Character {
-  return withInventory(c, { ...c.inventory, items }, change);
+function withItems(c: Character, items: Item[], change: string, state: Partial<CharacterState> = {}): Character {
+  return { ...withState(c, state, change), inventory: { ...c.inventory, items } };
 }
 
 const find = (c: Character, id: string) => c.inventory.items.find(i => i.id === id);
@@ -25,7 +26,7 @@ const find = (c: Character, id: string) => c.inventory.items.find(i => i.id === 
  * would go below zero, nothing changes.
  */
 export function changeCoins(c: Character, delta: Partial<Record<Coin, number>>): Character {
-  const next = { ...c.inventory.coins };
+  const next = { ...c.state.coins };
   const parts: string[] = [];
   for (const k of COINS) {
     const d = Math.trunc(delta[k] ?? 0);
@@ -35,7 +36,7 @@ export function changeCoins(c: Character, delta: Partial<Record<Coin, number>>):
     parts.push(`${d > 0 ? "+" : ""}${d} ${k}`);
   }
   if (!parts.length) return c;
-  return withInventory(c, { ...c.inventory, coins: next }, `coins ${parts.join(" ")}`);
+  return withState(c, { coins: next }, `coins ${parts.join(" ")}`);
 }
 
 /**
@@ -45,18 +46,17 @@ export function changeCoins(c: Character, delta: Partial<Record<Coin, number>>):
  */
 export function setEquipped(c: Character, id: string, on: boolean): Character {
   const item = find(c, id);
-  if (!item || item.equipped === on) return c;
+  if (!item || c.state.equipped.includes(id) === on) return c;
+  if (!on) return withState(c, { equipped: c.state.equipped.filter(x => x !== id) }, `${item.name} unequipped`);
+
   const isArmor = item.equipEffect?.acBase !== undefined;
   const isShield = item.category === "shield";
-  const removed: string[] = [];
-  const items = c.inventory.items.map(i => {
-    if (i.id === id) return { ...i, equipped: on };
-    const clashes = on && i.equipped && ((isArmor && i.equipEffect?.acBase !== undefined) || (isShield && i.category === "shield"));
-    if (!clashes) return i;
-    removed.push(i.name);
-    return { ...i, equipped: false };
-  });
-  return withItems(c, items, `${item.name} ${on ? "equipped" : "unequipped"}${removed.length ? ` (took off ${removed.join(", ")})` : ""}`);
+  const clashes = c.inventory.items.filter(i =>
+    i.id !== id && c.state.equipped.includes(i.id)
+    && ((isArmor && i.equipEffect?.acBase !== undefined) || (isShield && i.category === "shield")));
+  const off = clashes.map(i => i.id);
+  const equipped = [...c.state.equipped.filter(x => !off.includes(x)), id];
+  return withState(c, { equipped }, `${item.name} equipped${clashes.length ? ` (took off ${clashes.map(i => i.name).join(", ")})` : ""}`);
 }
 
 /** Attune or end attunement. Only items that require attunement; at most three at once. */
@@ -78,14 +78,15 @@ export function changeQuantity(c: Character, id: string, delta: number): Charact
   return withItems(c, items, `${item.name} x${qty}`);
 }
 
-function setCharges(c: Character, id: string, change: (current: number, max: number) => number): Character {
+function setCharges(c: Character, id: string, change: (current: number) => number): Character {
   const item = find(c, id);
   const ch = derive(c).inventory.charges[id];
-  if (!item?.charges || !ch) return c;
-  const current = Math.min(ch.max, Math.max(0, change(ch.current, ch.max)));
-  if (current === item.charges.current) return c;
-  const items = c.inventory.items.map(i => (i.id === id && i.charges ? { ...i, charges: { ...i.charges, current } } : i));
-  return withItems(c, items, `${item.name} charges ${current}/${ch.max}`);
+  if (!item || !ch) return c;
+  const current = Math.min(ch.max, Math.max(0, change(ch.current)));
+  if (current === ch.current) return c;
+  const { [id]: _old, ...chargesSpent } = c.state.chargesSpent;
+  if (current < ch.max) chargesSpent[id] = ch.max - current;
+  return withState(c, { chargesSpent }, `${item.name} charges ${current}/${ch.max}`);
 }
 
 export const spendCharge = (c: Character, id: string, n = 1) => setCharges(c, id, cur => cur - Math.trunc(n));
@@ -109,7 +110,6 @@ export function addItem(c: Character, input: NewItem): Character {
     name,
     category: input.category,
     qty: Math.max(0, Math.trunc(input.qty ?? 1)),
-    equipped: false,
     attuned: false,
     requiresAttunement: false,
     ...(input.weight !== undefined ? { weight: input.weight } : {}),
@@ -118,8 +118,13 @@ export function addItem(c: Character, input: NewItem): Character {
   return withItems(c, [...c.inventory.items, item], `added ${name}${item.qty !== 1 ? ` x${item.qty}` : ""}`);
 }
 
+/** Remove an item, and its equipped flag and spent charges from state. */
 export function removeItem(c: Character, id: string): Character {
   const item = find(c, id);
   if (!item) return c;
-  return withItems(c, c.inventory.items.filter(i => i.id !== id), `removed ${item.name}`);
+  const { [id]: _spent, ...chargesSpent } = c.state.chargesSpent;
+  return withItems(c, c.inventory.items.filter(i => i.id !== id), `removed ${item.name}`, {
+    equipped: c.state.equipped.filter(x => x !== id),
+    chargesSpent,
+  });
 }

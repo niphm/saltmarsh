@@ -27,7 +27,7 @@
   let coinAmount = $state<number | null>(null);
   let coin = $state<Coin>("gp");
   const amountOk = $derived(typeof coinAmount === "number" && Number.isInteger(coinAmount) && coinAmount > 0);
-  const canSpend = $derived(amountOk && (coinAmount as number) <= c.inventory.coins[coin]);
+  const canSpend = $derived(amountOk && (coinAmount as number) <= c.state.coins[coin]);
 
   function moveCoins(sign: 1 | -1) {
     if (!amountOk) return;
@@ -71,7 +71,7 @@
     {#each COINS as k (k)}
       <div class="rounded-lg bg-well py-2">
         <dt class="text-xs font-semibold text-ink-muted uppercase">{k}</dt>
-        <dd class="text-lg font-semibold text-ink tabular-nums">{c.inventory.coins[k]}</dd>
+        <dd class="text-lg font-semibold text-ink tabular-nums">{c.state.coins[k]}</dd>
       </div>
     {/each}
   </dl>
@@ -110,6 +110,7 @@
   <ul class="mt-2">
     {#each items as item (item.id)}
       {@const charges = d.inventory.charges[item.id]}
+      {@const equipped = d.inventory.equipped.includes(item.id)}
       {@const ac = acNote(item.equipEffect)}
       <li class="border-b border-line py-2 last:border-b-0">
         <div class="flex items-start gap-2">
@@ -122,19 +123,19 @@
           <button
             type="button"
             role="switch"
-            aria-checked={item.equipped}
+            aria-checked={equipped}
             aria-label="{item.name} equipped"
-            onclick={() => act(ch => setEquipped(ch, item.id, !item.equipped))}
-            class="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border-2 px-3 text-sm font-semibold {item.equipped
+            onclick={() => act(ch => setEquipped(ch, item.id, !equipped))}
+            class="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border-2 px-3 text-sm font-semibold {equipped
               ? 'border-accent bg-accent text-on-accent'
               : 'border-line text-ink-muted hover:text-ink'}"
           >
-            {#if item.equipped}
+            {#if equipped}
               <svg viewBox="0 0 16 16" class="size-3.5" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
                 <path d="M3 8.5 6.5 12 13 4.5" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
             {/if}
-            <span aria-hidden="true">{item.equipped ? "Equipped" : "Equip"}</span>
+            <span aria-hidden="true">{equipped ? "Equipped" : "Equip"}</span>
           </button>
         </div>
 

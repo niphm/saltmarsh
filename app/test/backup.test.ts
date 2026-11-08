@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { Character } from "@saltmarsh/schema";
 import { examples } from "@saltmarsh/schema/examples";
 import { BACKUP_KIND, backupJson, characterJson, exportFileName, parseImport } from "../src/lib/backup";
+import { asV1 } from "./v1";
 
 const chars = examples.map(raw => Character.parse(raw));
 
@@ -20,6 +21,16 @@ describe("export (F1.13)", () => {
     const r = parseImport(characterJson(chars[1]));
     expect(r.ok && r.plan.kind).toBe("character");
     expect(r.ok && r.plan.characters.map(c => c.identity.name)).toEqual(["Kenpachi"]);
+  });
+
+  it("an export from before schema v2 is upgraded on import", () => {
+    const old = asV1(examples[1]);
+    old.inventory.coins = { gp: 7 };
+    const r = parseImport(JSON.stringify(old));
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.plan.problems).toEqual([]);
+    expect(r.plan.characters[0]).toMatchObject({ schemaVersion: 2, state: { coins: { gp: 7 }, equipped: chars[1].state.equipped } });
   });
 
   it("a plain array of characters also imports", () => {

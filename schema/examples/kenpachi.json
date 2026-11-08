@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "id": "c_kenpachi",
   "ownerId": "u_kenpachi",
   "partyId": "p_saltmarsh",
@@ -265,16 +265,12 @@
     }
   ],
   "inventory": {
-    "coins": {
-      "gp": 0
-    },
     "items": [
       {
         "id": "i-warhammer",
         "name": "Warhammer",
         "category": "weapon",
         "qty": 1,
-        "equipped": true,
         "weight": 2
       },
       {
@@ -282,7 +278,6 @@
         "name": "Javelin",
         "category": "weapon",
         "qty": 1,
-        "equipped": true,
         "weight": 2
       },
       {
@@ -290,7 +285,6 @@
         "name": "Pistol",
         "category": "weapon",
         "qty": 1,
-        "equipped": true,
         "weight": 3
       },
       {
@@ -298,7 +292,6 @@
         "name": "Shield",
         "category": "shield",
         "qty": 1,
-        "equipped": true,
         "weight": 6,
         "equipEffect": {
           "acBonus": 2
@@ -325,6 +318,16 @@
     "conditions": [],
     "effects": [],
     "inspiration": false,
+    "coins": {
+      "gp": 0
+    },
+    "equipped": [
+      "i-warhammer",
+      "i-javelin",
+      "i-pistol",
+      "i-shield"
+    ],
+    "chargesSpent": {},
     "log": []
   },
   "createdAt": "2026-11-07T17:00:00Z",

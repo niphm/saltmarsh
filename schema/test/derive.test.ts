@@ -125,11 +125,11 @@ describe("derive: Kenpachi", () => {
   });
 
   it("AC: shield adds +2 only while equipped", () => {
-    const unequipped = {
-      ...c,
-      inventory: { ...c.inventory, items: c.inventory.items.map(i => i.id === "i-shield" ? { ...i, equipped: false } : i) },
-    };
+    const unequipped = { ...c, state: { ...c.state, equipped: c.state.equipped.filter(id => id !== "i-shield") } };
     expect(derive(unequipped).ac).toBe(9);
+    // An equipped id with no matching item is ignored.
+    expect(derive({ ...c, state: { ...c.state, equipped: [...c.state.equipped, "i-gone"] } }).inventory.equipped)
+      .toEqual(["i-warhammer", "i-javelin", "i-pistol", "i-shield"]);
   });
 });
 

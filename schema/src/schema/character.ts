@@ -16,7 +16,8 @@
 import { z } from "zod";
 import { Expr, ABILITIES } from "./expression";
 
-export const SCHEMA_VERSION = 1;
+/** v2: coins, equipped items and item charges moved from the document into `state` (see migrate.ts). */
+export const SCHEMA_VERSION = 2;
 
 const Id = z.string().min(1);
 const Ability = z.enum(ABILITIES);
@@ -41,6 +42,7 @@ export const Recharge = z.enum([
   "turn",        // once per turn - UI resets automatically
   "manual",      // never auto-recharges (Tides of Chaos regain-on-surge, DM-granted)
 ]);
+export type Recharge = z.infer<typeof Recharge>;
 
 export const ResourceKind = z.enum([
   "pips",     // N discrete uses rendered as circles (Rage 3/3, Channel Divinity)
@@ -172,10 +174,11 @@ export const Item = z.object({
   qty: z.number().min(0).default(1),
   weight: z.number().optional(),           // lb each
   value: z.object({ amount: z.number(), unit: z.enum(["cp", "sp", "ep", "gp", "pp"]) }).optional(),
-  equipped: z.boolean().default(false),
+  // Whether it's equipped, and charges used, are table state: `state.equipped`, `state.chargesSpent`.
   attuned: z.boolean().default(false),
   requiresAttunement: z.boolean().default(false),
-  charges: z.object({ current: z.number(), max: Expr, recharge: Recharge }).optional(),
+  /** Charges recharge by `recharge` like resources; spent charges live in `state.chargesSpent`. */
+  charges: z.object({ max: Expr, recharge: Recharge }).optional(),
   /** Mechanical effect while equipped. Keeps AC computed, not typed. */
   equipEffect: z.object({
     acBase: z.number().optional(),         // armor: 11 (leather), 14 (breastplate)
@@ -232,6 +235,15 @@ export const CharacterState = z.object({
   inspiration: z.boolean().default(false),
   acOverride: z.number().int().optional(), // for Mage Armor etc. until spell effects exist as data
   speedOverride: z.number().int().optional(),
+  /**
+   * Inventory that changes at the table. In `state` so it syncs on the fast
+   * path and the party DM can change it (F2.8: only the owner writes the document).
+   */
+  coins: Coins.default({}),
+  /** Ids of equipped items. Equipped armor and shields feed AC in derive(). */
+  equipped: z.array(Id).default([]),
+  /** Spent charges per item id, like `spent` for resources. Missing key = full. */
+  chargesSpent: z.record(Id, z.number().int().min(0)).default({}),
   /** Last N state changes for undo and the DM's combat log. */
   log: z.array(z.object({
     at: z.string(),                        // ISO timestamp
@@ -289,8 +301,8 @@ export const Character = z.object({
   spellcasting: SpellcastingBlock.optional(),
   attacks: z.array(Attack).default([]),
 
+  /** Item definitions. Coins, what's equipped and charges used are in `state`. */
   inventory: z.object({
-    coins: Coins.default({}),
     items: z.array(Item).default([]),
   }).default({}),
 

@@ -4,8 +4,8 @@
  *
  * Every change is an engine function (Character -> Character). The store
  * never edits a character itself: it swaps in what the engine returns, saves
- * it, and keeps what changed (state, and inventory if touched) so undo can
- * put it back.
+ * it, and keeps what changed (state, plus inventory items or notes if
+ * touched) so undo can put it back.
  */
 import type { Character } from "@saltmarsh/schema";
 import { examples } from "@saltmarsh/schema/examples";
@@ -51,16 +51,18 @@ export class CharacterStore {
       return;
     }
 
+    // Undo steps saved before a schema upgrade hold old-shape states; restoring one would break the sheet.
+    const { writes, seedWrites, upgraded } = plan;
     this.entries = plan.entries;
-    this.undoStacks = Object.fromEntries(history.map(h => [h.id, h.stack.map(toUndoStep)]));
+    this.undoStacks = Object.fromEntries(history.filter(h => !upgraded.includes(h.id)).map(h => [h.id, h.stack.map(toUndoStep)]));
     this.ready = true;
 
-    const { writes, seedWrites } = plan;
-    if (writes.length || seedWrites.length) {
+    if (writes.length || seedWrites.length || upgraded.length) {
       await this.#persist(() =>
-        db.transaction("rw", db.characters, db.settings, async () => {
+        db.transaction("rw", db.characters, db.settings, db.history, async () => {
           await db.characters.bulkPut(writes);
           await db.settings.bulkPut(seedWrites);
+          await db.history.bulkDelete(upgraded);
         }),
       );
     }

@@ -115,6 +115,7 @@ Non-functional:
 5. Repo layout: single repo - `app/`, `packs/`, `supabase/`, `schema/` as an npm workspace package consumed by `app/`.
 6. Hosting: `https://niphm.github.io/saltmarsh/`. Vite `base` and the PWA scope are `/saltmarsh/`; Supabase Site URL and redirect URLs already point there.
 7. Themes: selectable presets (N1.6), not a single dark/light toggle.
+8. Coins, equipped items and spent item charges are table state (`state.coins`, `state.equipped`, `state.chargesSpent`; schema v2), not document fields, so the party DM can hand out gold under F2.8 and they sync on the state path. Item definitions, quantity and attunement stay in the document. (2026-11-08)
 
 ## 9. Data corrections applied to examples
 

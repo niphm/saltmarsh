@@ -180,6 +180,36 @@ describe("initiative recharge", () => {
   });
 });
 
+// Bug: Item.charges carried a `recharge` tag, but no rest ever recharged item charges.
+describe("item charges recharge by their `recharge` tag", () => {
+  const base = loadExample("kenpachi");
+  const charged = (id: string, recharge: "short" | "long" | "dawn" | "initiative" | "manual") =>
+    ({ id, name: id, category: "magic-item" as const, qty: 1, attuned: false, requiresAttunement: false, charges: { max: 3, recharge } });
+  const k = withState(
+    {
+      ...base,
+      inventory: {
+        items: [...base.inventory.items, charged("short", "short"), charged("long", "long"), charged("dawn", "dawn"),
+          charged("init", "initiative"), charged("manual", "manual")],
+      },
+    },
+    { chargesSpent: { short: 1, long: 2, dawn: 3, init: 1, manual: 2 } },
+  );
+
+  it("short rest refills `short` charges only", () => {
+    expect(shortRest(k).state.chargesSpent).toEqual({ long: 2, dawn: 3, init: 1, manual: 2 });
+  });
+
+  it("long rest refills everything except `manual`", () => {
+    expect(longRest(k).state.chargesSpent).toEqual({ manual: 2 });
+    expect(derive(longRest(k)).inventory.charges.dawn).toEqual({ current: 3, max: 3 });
+  });
+
+  it("rolling initiative refills `initiative` charges only", () => {
+    expect(onInitiative(k).state.chargesSpent).toEqual({ short: 1, long: 2, dawn: 3, manual: 2 });
+  });
+});
+
 describe("rest engine hygiene", () => {
   it("never mutates its input", () => {
     const k = withState(loadExample("kenpachi"), { spent: { "rage-uses": 2 }, conditions: [{ condition: "exhaustion", level: 2 }] });

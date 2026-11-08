@@ -4,10 +4,22 @@
  */
 import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it } from "vitest";
-import { addItem, applyDamage, changeCoins, derive, setEquipped, setNotes, setTempHp, spendResource, type Character } from "@saltmarsh/schema";
+import {
+  addItem,
+  applyDamage,
+  changeCoins,
+  changeQuantity,
+  derive,
+  setEquipped,
+  setNotes,
+  setTempHp,
+  spendResource,
+  type Character,
+} from "@saltmarsh/schema";
 import { examples } from "@saltmarsh/schema/examples";
 import { db } from "../src/lib/db";
 import { CharacterStore, UNDO_LIMIT, docHash } from "../src/lib/store.svelte";
+import { asV1, type V1Doc } from "./v1";
 
 const char = (s: CharacterStore, id: string): Character => {
   const e = s.find(id);
@@ -47,9 +59,12 @@ describe("persistence (N1.3)", () => {
     expect(k.state.hp.current).toBe(41);
   });
 
-  it("a changed example document is refreshed but table state is kept", async () => {
+  it("a changed example document is refreshed but table state, notes and inventory edits are kept", async () => {
     const s = await reload();
     await s.apply("c_tidewick", c => applyDamage(c, 4));
+    await s.apply("c_tidewick", c => setNotes(c, "Owe Skerrin 5 gp"));
+    await s.apply("c_tidewick", c => changeQuantity(c, "i-dagger", 2));
+    await s.apply("c_tidewick", c => addItem(c, { name: "Sea Charm", category: "magic-item" }));
 
     const edited = examples.map(raw => {
       const r = raw as { id: string; hpMax: number };
@@ -61,6 +76,51 @@ describe("persistence (N1.3)", () => {
     const t = char(after, "c_tidewick");
     expect(derive(t).hpMax).toBe(40);
     expect(t.state.hp.current).toBe(30);
+    expect(t.notes).toBe("Owe Skerrin 5 gp");
+    expect(t.inventory.items.map(i => [i.name, i.qty])).toEqual([["Dagger", 3], ["Arcane Focus (crystal)", 1], ["Sea Charm", 1]]);
+  });
+
+  it("characters saved before schema v2 are upgraded, keeping coins, equipped items, notes and loot", async () => {
+    // Kenpachi as the previous version saved him: an example whose seed hash is the old document's.
+    const k1 = asV1(examples[1]);
+    k1.inventory.coins = { gp: 30, sp: 4 };
+    k1.inventory.items.find((i: { id: string }) => i.id === "i-shield").equipped = false;
+    k1.inventory.items.push({ id: "i-sea-charm-abc12", name: "Sea Charm", category: "magic-item", qty: 1, equipped: true, attuned: false, requiresAttunement: false });
+    k1.notes = "Owes Skerrin";
+    k1.state.hp.current = 40;
+    // Tidewick imported over the example (locally owned), and a character that isn't an example.
+    const t1 = asV1(examples[0]);
+    t1.inventory.coins = { pp: 2 };
+    const a1: V1Doc = { ...asV1(examples[0]), id: "c_azrael" };
+    await db.characters.bulkPut([k1, t1, a1] as unknown as Character[]);
+    await db.settings.bulkPut([
+      { key: "seed:c_kenpachi", value: docHash(asV1(examples[1])) },
+      { key: "seed:c_tidewick", value: "local" },
+    ]);
+    await db.history.bulkPut([{ id: "c_kenpachi", stack: [{ state: k1.state }] }, { id: "c_azrael", stack: [a1.state] }]);
+
+    const s = await reload();
+    const k = char(s, "c_kenpachi");
+    expect(k.schemaVersion).toBe(2);
+    expect(k.state.coins).toMatchObject({ gp: 30, sp: 4 });
+    expect(k.state.equipped).toEqual(["i-warhammer", "i-javelin", "i-pistol", "i-sea-charm-abc12"]);
+    expect(derive(k).ac).toBe(9); // shield was off
+    expect(k.notes).toBe("Owes Skerrin");
+    expect(k.inventory.items.at(-1)?.name).toBe("Sea Charm");
+    expect(k.state.hp.current).toBe(40);
+    expect(char(s, "c_tidewick").state.coins.pp).toBe(2);
+    expect(char(s, "c_azrael").state.equipped).toEqual(["i-dagger", "i-focus"]);
+
+    // Old undo steps can't be restored onto the new shape, so they're dropped.
+    expect(s.canUndo("c_kenpachi")).toBe(false);
+    expect(s.canUndo("c_azrael")).toBe(false);
+    expect(await db.history.count()).toBe(0);
+    // Written back as v2, so the next load has nothing to upgrade.
+    expect((await db.characters.toArray()).map(c => [c.id, c.schemaVersion]).sort()).toEqual([
+      ["c_azrael", 2], ["c_kenpachi", 2], ["c_tidewick", 2],
+    ]);
+    await s.apply("c_kenpachi", c => changeCoins(c, { gp: -5 }));
+    expect(char(await reload(), "c_kenpachi").state.coins.gp).toBe(25);
   });
 
   it("a saved copy that no longer validates is reseeded from the example", async () => {
@@ -159,14 +219,18 @@ describe("undo (F1.12)", () => {
     expect(s.undoStacks["c_kenpachi"]).toHaveLength(UNDO_LIMIT);
   });
 
-  it("undo puts back inventory changes too (inventory lives outside state)", async () => {
+  it("undo puts back coins and equipped items (state) and item changes (document)", async () => {
     const s = await reload();
     await s.apply("c_kenpachi", c => setEquipped(c, "i-shield", false));
     await s.apply("c_kenpachi", c => changeCoins(c, { gp: 25 }));
+    await s.apply("c_kenpachi", c => changeQuantity(c, "i-javelin", 3));
     expect(derive(char(s, "c_kenpachi")).ac).toBe(9);
 
     await s.undo("c_kenpachi");
-    expect(char(s, "c_kenpachi").inventory.coins.gp).toBe(0);
+    expect(char(s, "c_kenpachi").inventory.items.find(i => i.id === "i-javelin")?.qty).toBe(1);
+    expect(char(s, "c_kenpachi").state.coins.gp).toBe(25);
+    await s.undo("c_kenpachi");
+    expect(char(s, "c_kenpachi").state.coins.gp).toBe(0);
     await s.undo("c_kenpachi");
     expect(derive(char(s, "c_kenpachi")).ac).toBe(11);
   });

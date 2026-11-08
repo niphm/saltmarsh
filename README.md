@@ -10,8 +10,9 @@ The data model lives in the `schema/` workspace package (`@saltmarsh/schema`). T
 schema/src/schema/expression.ts   tiny formula language + safe evaluator ("prof", "max(1, mod.wis)")
 schema/src/schema/character.ts    Character document - identity, classes, resources, spells, attacks, inventory, state
 schema/src/schema/party.ts        Party, members/roles, shared inventory, journal, encounters
+schema/src/schema/migrate.ts      upgrades saved documents to the current schemaVersion before validation
 schema/src/engine/derive.ts       pure function: Character -> every computed number on the sheet
-schema/src/engine/rest.ts         short/long rest + initiative recharge, driven only by resource tags
+schema/src/engine/rest.ts         short/long rest + initiative recharge, driven only by resource and item-charge tags
 schema/src/engine/hp.ts           damage (temp HP first, death saves at 0), healing (clamped), temp HP
 schema/src/engine/resources.ts    spend/regain resources and spell slots, `state` resources on/off
 schema/src/engine/conditions.ts   conditions, exhaustion, free-text effects, concentration, inspiration
@@ -32,7 +33,7 @@ Run `npm install && npm run validate` from the repo root. `npm test` runs the un
 
 1. **Store choices, derive everything else.** Ability scores, level, class, features, equipped items are stored. Proficiency, DCs, slots, passive scores, AC, resource maxes are computed by `derive()`. The UI never does math.
 2. **Every trackable thing is a `Resource`.** `{id, kind, max, recharge}`. Rage, Sorcery Points, Channel Divinity, free casts, Wild Magic, magic item charges all use the same four kinds (`pips`, `counter`, `toggle`, `state`). The rest buttons walk the list. Adding homebrew = adding an object.
-3. **`state` is the only thing that changes at the table.** Everything else changes at level-up. Sync pushes `state` (small, frequent); the rest of the document syncs rarely. Undo = pop the log.
+3. **`state` is the only thing that changes at the table.** Everything else changes at level-up. Sync pushes `state` (small, frequent); the rest of the document syncs rarely. Undo = pop the log. Coins, equipped items and spent item charges are `state` (schema v2), so the party DM can change them; the document holds the item definitions, quantity and attunement.
 4. **No level in storage keys.** One record per character id. Level is a field. Level-up edits the document in place.
 
 ## Expressions

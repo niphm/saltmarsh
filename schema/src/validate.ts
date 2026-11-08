@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { Character } from "./schema/character";
+import { migrateCharacter } from "./schema/migrate";
 import { derive } from "./engine/derive";
 import { shortRest, longRest } from "./engine/rest";
 
@@ -13,7 +14,7 @@ const files = process.argv.length > 2
   : readdirSync(examplesDir).filter(f => f.endsWith(".json")).sort().map(f => join(examplesDir, f));
 
 for (const file of files) {
-  const doc = Character.parse(JSON.parse(readFileSync(file, "utf8")));
+  const doc = Character.parse(migrateCharacter(JSON.parse(readFileSync(file, "utf8"))));
   const d = derive(doc);
   console.log(`\n== ${doc.identity.name} (L${d.level}, prof +${d.prof}) ==`);
   console.log(`HP ${doc.state.hp.current}/${d.hpMax}  AC ${d.ac}  Speed ${d.speed}  Init ${d.initiative >= 0 ? "+" : ""}${d.initiative}  PP ${d.passive.perception}`);

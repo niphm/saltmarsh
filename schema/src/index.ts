@@ -3,6 +3,7 @@ export * from "./schema/expression";
 export * from "./schema/character";
 export * from "./schema/party";
 export * from "./schema/pack";
+export * from "./schema/migrate";
 export * from "./engine/derive";
 export * from "./engine/rest";
 export * from "./engine/hp";
