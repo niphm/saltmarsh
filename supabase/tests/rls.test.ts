@@ -254,17 +254,29 @@ describe("realtime (F2.6)", () => {
       return got;
     };
     const [bobGot, eveGot] = await Promise.all([listen(bob), listen(eve)]);
-    await new Promise(r => setTimeout(r, 1000)); // let earlier tests' changes drain and the subscriptions settle
+    const sees = (hp: number) => (r: Row) => r.character_id === A && r.state.hp.current === hp;
+    const update = (hp: number) => alice.db.from("character_states").update({ state: state(hp), state_edited_at: now() }).eq("character_id", A);
+    const heard = async (hp: number, ms: number) => {
+      const t0 = Date.now();
+      while (!bobGot.some(sees(hp)) && Date.now() - t0 < ms) await new Promise(r => setTimeout(r, 20));
+      return bobGot.some(sees(hp));
+    };
 
-    const isIt = (r: Row) => r.character_id === A && r.state.hp.current === 7;
+    // A freshly started stack takes a few seconds before realtime streams; wait until it does.
+    let flowing = false;
+    for (let hp = 100; hp < 130 && !flowing; hp++) {
+      await update(hp);
+      flowing = await heard(hp, 1000);
+    }
+    expect(flowing).toBe(true);
+
     const t0 = Date.now();
-    await alice.db.from("character_states").update({ state: state(7), state_edited_at: now() }).eq("character_id", A);
-    while (!bobGot.some(isIt) && Date.now() - t0 < 5000) await new Promise(r => setTimeout(r, 20));
-    expect(bobGot.some(isIt)).toBe(true);
+    await update(7);
+    expect(await heard(7, 5000)).toBe(true);
     expect(Date.now() - t0).toBeLessThan(2000);
     await new Promise(r => setTimeout(r, 500));
     expect(eveGot).toEqual([]);
-  }, 15_000);
+  }, 60_000);
 });
 
 describe("leaving a party", () => {
