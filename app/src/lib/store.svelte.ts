@@ -19,7 +19,12 @@ export const UNDO_LIMIT = 50;
 
 export type Change = (c: Character) => Character;
 
+/** Told about every change made on this device (sync uses it to queue uploads). */
+export type ChangeListener = (id: string, prev: Character | undefined, next: Character) => void;
+
 export class CharacterStore {
+  listener: ChangeListener | null = null;
+
   entries = $state.raw<LoadResult[]>([]);
   undoStacks = $state.raw<Record<string, UndoStep[]>>({});
   ready = $state(false);
@@ -98,7 +103,26 @@ export class CharacterStore {
     this.#replace(id, next);
     this.undoStacks = { ...this.undoStacks, [id]: stack };
     this.#announce(next.state.log.at(-1)?.change ?? "Updated");
+    this.listener?.(id, prev, next);
     await this.#save(next, stack);
+  }
+
+  /**
+   * Put in a copy that came from elsewhere (the server, another device, the
+   * DM). Not undoable, and it clears the undo history unless `keepUndo`:
+   * undoing would otherwise put back what this device had before the change.
+   */
+  async receive(character: Character, { keepUndo = false }: { keepUndo?: boolean } = {}): Promise<void> {
+    const c = $state.snapshot(character) as Character;
+    const id = c.id;
+    const entry: LoadResult = { ok: true, id, name: c.identity.name, character: c };
+    this.entries = this.entries.some(e => e.id === id) ? this.entries.map(e => (e.id === id ? entry : e)) : [...this.entries, entry];
+    const stack = keepUndo ? (this.undoStacks[id] ?? []) : [];
+    if (!keepUndo && this.undoStacks[id]) {
+      const { [id]: _dropped, ...rest } = this.undoStacks;
+      this.undoStacks = rest;
+    }
+    await this.#save(c, stack);
   }
 
   /** Put back what the last change replaced (which also pops that change off state.log). */
@@ -116,9 +140,11 @@ export class CharacterStore {
       updatedAt: nowIso(),
     };
     const rest = stack.slice(0, -1);
+    const prev = entry.character;
     this.#replace(id, next);
     this.undoStacks = { ...this.undoStacks, [id]: rest };
     this.#announce(undone ? `Undid: ${undone}` : "Undid last change");
+    this.listener?.(id, prev, next);
     await this.#save(next, rest);
   }
 
@@ -133,9 +159,12 @@ export class CharacterStore {
     const chars = incoming.map(c => $state.snapshot(c) as Character);
     const bundledIds = this.#bundled.map(raw => (raw as { id?: unknown } | null)?.id).filter(id => typeof id === "string");
     const entries = [...this.entries];
+    const replaced: (Character | undefined)[] = [];
     for (const c of chars) {
       const entry: LoadResult = { ok: true, id: c.id, name: c.identity.name, character: c };
       const i = entries.findIndex(e => e.id === c.id);
+      const old = entries[i];
+      replaced.push(old?.ok ? old.character : undefined);
       if (i >= 0) entries[i] = entry;
       else entries.push(entry);
     }
@@ -145,6 +174,7 @@ export class CharacterStore {
     this.entries = entries;
     this.undoStacks = undo;
     this.#announce(`Imported ${chars.map(c => c.identity.name).join(", ")}`);
+    chars.forEach((c, i) => this.listener?.(c.id, replaced[i], c));
 
     await this.#persist(() =>
       db.transaction("rw", db.characters, db.history, db.settings, async () => {
@@ -155,13 +185,14 @@ export class CharacterStore {
     );
   }
 
-  /** Forget all local changes and reload the bundled examples. */
+  /** Forget all local changes and reload the bundled examples (sync links too; signed in, the server copies come back). */
   async reset(): Promise<void> {
     await this.#persist(() =>
-      db.transaction("rw", db.characters, db.history, db.settings, async () => {
+      db.transaction("rw", [db.characters, db.history, db.settings, db.sync], async () => {
         await db.characters.clear();
         await db.history.clear();
         await db.settings.where("key").startsWith(SEED_PREFIX).delete();
+        await db.sync.clear();
       }),
     );
     this.undoStacks = {};

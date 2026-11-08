@@ -254,6 +254,35 @@ describe("undo (F1.12)", () => {
     expect(char(after, "c_kenpachi").state.hp.current).toBe(51);
   });
 
+  it("tells the sync listener about every change, undo and import", async () => {
+    const s = await reload();
+    const calls: [string, boolean, number][] = [];
+    s.listener = (id, prev, next) => calls.push([id, !!prev, next.state.hp.current]);
+    await s.apply("c_kenpachi", c => applyDamage(c, 5));
+    await s.undo("c_kenpachi");
+    await s.importCharacters([{ ...char(s, "c_tidewick"), id: "c_new" }]);
+    expect(calls).toEqual([["c_kenpachi", true, 46], ["c_kenpachi", true, 51], ["c_new", false, 34]]);
+  });
+
+  it("a copy from the server replaces the character without an undo step, and clears undo", async () => {
+    const s = await reload();
+    await s.apply("c_kenpachi", c => applyDamage(c, 5));
+    const remote = applyDamage(char(s, "c_kenpachi"), 20);
+    await s.receive(remote);
+    expect(char(s, "c_kenpachi").state.hp.current).toBe(26);
+    expect(s.canUndo("c_kenpachi")).toBe(false);
+    expect(char(await reload(), "c_kenpachi").state.hp.current).toBe(26);
+  });
+
+  it("receive can keep undo (log merges that don't change values) and adds new characters", async () => {
+    const s = await reload();
+    await s.apply("c_kenpachi", c => applyDamage(c, 5));
+    await s.receive(char(s, "c_kenpachi"), { keepUndo: true });
+    expect(s.canUndo("c_kenpachi")).toBe(true);
+    await s.receive({ ...char(s, "c_tidewick"), id: "c_from_server" });
+    expect(s.entries.map(e => e.id)).toContain("c_from_server");
+  });
+
   it("each character has its own undo stack", async () => {
     const s = await reload();
     await s.apply("c_kenpachi", c => applyDamage(c, 1));

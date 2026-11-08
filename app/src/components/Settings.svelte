@@ -8,6 +8,8 @@
   import { downloadText } from "../lib/download";
   import { nowIso } from "../lib/seed";
   import Dialog from "./Dialog.svelte";
+  import Account from "./Account.svelte";
+  import { sync } from "../lib/sync/engine.svelte";
 
   let confirmReset = $state(false);
 
@@ -51,10 +53,13 @@
   async function reset() {
     confirmReset = false;
     await characters.reset();
+    await sync.afterReset();
   }
 </script>
 
 <h1 class="font-display text-3xl font-semibold text-ink">Settings</h1>
+
+<Account />
 
 <section aria-labelledby="theme-heading" class="mt-4 rounded-xl border border-line bg-card p-4">
   <h2 id="theme-heading" class="font-display text-sm font-semibold tracking-widest text-accent uppercase">Theme</h2>
@@ -196,7 +201,7 @@
 
 <Dialog bind:open={confirmReset} title="Reset local data?">
   <p class="text-ink">
-    This puts every bundled character back to its starting state and clears undo history on this device. It can't be undone.
+    This puts every bundled character back to its starting state and clears undo history on this device. It can't be undone. If you're signed in, characters on your account come back from the server.
   </p>
   {#snippet footer()}
     <button type="button" class="btn" onclick={() => (confirmReset = false)}>Cancel</button>

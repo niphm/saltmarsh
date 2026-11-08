@@ -31,11 +31,19 @@ npm test
 schema/    @saltmarsh/schema - Zod schemas, engine, examples, unit tests (npm workspace)
 app/       Vite + Svelte 5 + TypeScript + Tailwind 4, PWA (vite-plugin-pwa/Workbox), Dexie
 packs/     rules packs as JSON (SRD 5.2 goes in packs/srd/)
-supabase/  migrations/ - all DDL and RLS (Phase 2)
+supabase/  migrations/ (all DDL and RLS), tests/rls.test.ts (security tests), config.toml (local stack)
 docs/      kickoff prompt and other notes
 ```
 
 Root scripts: `npm run dev`, `npm run lint`, `npm run typecheck`, `npm test`, `npm run validate`, `npm run build`.
+
+## Supabase (Phase 2)
+
+- Local stack (needs Docker Desktop running): `npm run db:start`, `npm run db:reset` (re-applies every migration), `npm run test:db` (RLS and realtime tests; CI runs them too and they gate deploys).
+- Local dev against it: `app/.env.local` (gitignored) with `VITE_SUPABASE_URL=http://127.0.0.1:54321` and the local publishable key from `npx supabase status`. Remove it (or point it back) before building anything to compare with production.
+- Schema changes are new files in `supabase/migrations/`, tested locally first. Applying one to the hosted project is a Supabase write: tell David first; he applies it (SQL editor or CLI).
+- Every RLS rule gets a test in `supabase/tests/rls.test.ts`.
+- Sync lives in `app/src/lib/sync/` (pure merge logic in `merge.ts`, unit-tested); party data in `app/src/lib/party.svelte.ts`. The Supabase client is loaded lazily (`lib/remote.ts`); keep it out of the first-load bundle.
 
 ## Rules packs
 

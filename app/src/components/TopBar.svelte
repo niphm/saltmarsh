@@ -2,8 +2,9 @@
   import type { LoadResult } from "../lib/characters";
   import { href } from "../lib/route.svelte";
 
-  let { characters, currentId, onSettings }: { characters: LoadResult[]; currentId?: string; onSettings: boolean } =
+  let { characters, currentId, section }: { characters: LoadResult[]; currentId?: string; section: "sheet" | "party" | "settings" } =
     $props();
+  const onSettings = $derived(section === "settings");
 
   const firstName = (name: string) => name.split(" ")[0] || name;
 
@@ -38,10 +39,24 @@
     </a>
 
     <a
+      href={href.party()}
+      aria-label="Party"
+      aria-current={section === "party" ? "page" : undefined}
+      class="ml-auto flex size-11 items-center justify-center rounded-lg text-ink-muted hover:bg-well hover:text-ink aria-[current=page]:bg-well aria-[current=page]:text-accent md:order-last"
+    >
+      <svg viewBox="0 0 24 24" class="size-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="9" cy="8" r="3.2" />
+        <path d="M3 19c.6-3.3 3-5 6-5s5.4 1.7 6 5" />
+        <circle cx="17" cy="9" r="2.4" />
+        <path d="M16.5 14.1c2.4.1 4 1.6 4.5 4.4" />
+      </svg>
+    </a>
+
+    <a
       href={href.settings}
       aria-label="Settings"
       aria-current={onSettings ? "page" : undefined}
-      class="ml-auto flex size-11 items-center justify-center rounded-lg text-ink-muted hover:bg-well hover:text-ink aria-[current=page]:bg-well aria-[current=page]:text-accent md:order-last"
+      class="flex size-11 items-center justify-center rounded-lg text-ink-muted hover:bg-well hover:text-ink aria-[current=page]:bg-well aria-[current=page]:text-accent md:order-last"
     >
       <svg viewBox="0 0 24 24" class="size-6" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
         <path
@@ -56,7 +71,7 @@
     <nav aria-label="Characters" class="-mx-4 w-[calc(100%+2rem)] overflow-x-auto px-4 md:mx-0 md:w-auto md:flex-1 md:px-0">
       <ul class="flex gap-1">
         {#each characters as c (c.id)}
-          {@const current = !onSettings && c.id === currentId}
+          {@const current = section === "sheet" && c.id === currentId}
           <li>
             <a
               href={href.sheet(c.id)}

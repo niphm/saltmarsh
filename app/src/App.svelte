@@ -6,6 +6,10 @@
   // Not on the first screen: loaded on demand to keep the main bundle small (precached for offline).
   const loadNotes = () => import("./components/Notes.svelte");
   const loadSettings = () => import("./components/Settings.svelte");
+  const loadParty = () => import("./components/Party.svelte");
+  import PartyStrip from "./components/PartyStrip.svelte";
+  import AccountDialogs from "./components/AccountDialogs.svelte";
+  import { auth } from "./lib/auth.svelte";
   import TopBar from "./components/TopBar.svelte";
   import StatusBar from "./components/StatusBar.svelte";
   import DiceBar from "./components/DiceBar.svelte";
@@ -30,13 +34,15 @@
     document.title =
       route.name === "settings"
         ? "Settings - Saltmarsh"
-        : current
+        : route.name === "party"
+          ? "Party - Saltmarsh"
+          : current
           ? `${route.view === "notes" ? "Notes - " : ""}${current.name} - Saltmarsh`
           : "Saltmarsh";
   });
 </script>
 
-<TopBar characters={characters.entries} currentId={current?.id} onSettings={router.route.name === "settings"} />
+<TopBar characters={characters.entries} currentId={current?.id} section={router.route.name} />
 
 {#if current?.ok && d}
   <StatusBar
@@ -60,6 +66,11 @@
     {#await loadSettings() then { default: Settings }}
       <Settings />
     {/await}
+  {:else if router.route.name === "party"}
+    {@const route = router.route}
+    {#await loadParty() then { default: Party }}
+      <Party {route} />
+    {/await}
   {:else if !characters.ready}
     <p class="text-ink-muted">Loading characters…</p>
   {:else if current?.ok && d}
@@ -74,6 +85,7 @@
         >
       {/each}
     </nav>
+    {#if auth.account}<PartyStrip exclude={current.id} />{/if}
     {#key current.id}
       {#if view === "notes"}
         {#await loadNotes() then { default: Notes }}
@@ -93,6 +105,8 @@
 {#if router.route.name === "sheet" && current?.ok}
   <DiceBar c={current.character} {act} />
 {/if}
+
+{#if auth.configured}<AccountDialogs />{/if}
 
 <!-- Announces each change and undo to screen readers. -->
 <div class="sr-only" aria-live="polite" aria-atomic="true">
